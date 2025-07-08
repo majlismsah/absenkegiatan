@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Infaq Konsumsi - Ashnaf 36 Titik</title>
+  <style>
+    body { font-family: sans-serif; background: #f7f7f7; padding: 20px; }
+    .container {
+      background: #fff; padding: 24px; border-radius: 10px;
+      max-width: 500px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 { text-align: center; color: #2c3e50; }
+    label { margin-top: 15px; display: block; font-weight: bold; }
+    input, select {
+      width: 100%; padding: 10px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 6px;
+    }
+    button {
+      background: #27ae60; color: #fff; padding: 12px;
+      width: 100%; margin-top: 20px;
+      border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Infaq Konsumsi<br>Pembukaan Ashnaf 36 Titik</h2>
+    <form action="https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec" method="POST" enctype="multipart/form-data">
+      <label>Nama KTP:</label>
+      <input type="text" name="nama_ktp" required />
+
+      <label>Majlis Wilayah:</label>
+      <select name="majlis_wilayah" required>
+        <option value="">-- Pilih Wilayah --</option>
+        <option>Majlis Wilayah Ar-Rohman</option>
+        <option>Majlis Wilayah Ar-Rohim</option>
+        <option>Majlis Wilayah Al-Malik</option>
+        <option>Majlis Wilayah Al-Qudus</option>
+        <option>Majlis Kabilah Nurul Hikmah</option>
+        <option>Majlis Kabilah Nurul Hakim</option>
+        <option>Majlis Kabilah Nurul Salikin</option>
+        <option>Majlis Kabilah Nurul Kamilah</option>
+        <option>Majlis Barakatul Anbiya</option>
+      </select>
+
+      <label>No WhatsApp:</label>
+      <input type="tel" name="no_wa" required />
+
+      <label>Upload Bukti Transfer:</label>
+      <input type="file" name="bukti_transfer" accept="image/*,application/pdf" required />
+
+      <button type="submit">Kirim & Konfirmasi</button>
+    </form>
+  </div>
+</body>
+</html>
