@@ -21,12 +21,13 @@
       width: 100%; margin-top: 20px;
       border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
     }
+    #loading { text-align: center; margin-top: 10px; display: none; color: #777; }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Infaq Konsumsi<br>Pembukaan Ashnaf 36 Titik</h2>
-    <form action="https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec" method="POST" enctype="multipart/form-data">
+    <form id="infaqForm">
       <label>Nama KTP:</label>
       <input type="text" name="nama_ktp" required />
 
@@ -51,7 +52,37 @@
       <input type="file" name="bukti_transfer" accept="image/*,application/pdf" required />
 
       <button type="submit">Kirim & Konfirmasi</button>
+      <div id="loading">Mengirim data, mohon tunggu...</div>
     </form>
   </div>
+
+  <script>
+    const form = document.getElementById("infaqForm");
+    const loading = document.getElementById("loading");
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      loading.style.display = "block";
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch(
+          "https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec",
+          { method: "POST", body: formData }
+        );
+        const result = await response.json();
+        if (result.status === "ok") {
+          window.location.href = result.wa_url;
+        } else {
+          alert("Terjadi kesalahan: " + result.message);
+        }
+      } catch (err) {
+        alert("Gagal mengirim form: " + err.message);
+      } finally {
+        loading.style.display = "none";
+      }
+    });
+  </script>
 </body>
 </html>
