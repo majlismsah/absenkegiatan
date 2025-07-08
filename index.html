@@ -73,7 +73,22 @@
         );
         const result = await response.json();
         if (result.status === "ok") {
-          window.location.href = result.wa_url;
+  const waLink = document.createElement("a");
+  waLink.href = result.wa_url;
+  waLink.target = "_blank";
+  waLink.innerText = "Klik di sini untuk buka WhatsApp Admin";
+  waLink.style.display = "inline-block";
+  waLink.style.marginTop = "20px";
+  waLink.style.background = "#25d366";
+  waLink.style.color = "#fff";
+  waLink.style.padding = "12px";
+  waLink.style.borderRadius = "6px";
+  waLink.style.textDecoration = "none";
+  waLink.style.textAlign = "center";
+  document.getElementById("loading").innerHTML = "";
+  document.getElementById("loading").appendChild(waLink);
+}
+
         } else {
           alert("Terjadi kesalahan: " + result.message);
         }
