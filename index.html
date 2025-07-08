@@ -45,17 +45,12 @@
       font-size: 16px;
       cursor: pointer;
     }
-    #loading {
-      text-align: center;
-      margin-top: 20px;
-      color: #555;
-    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Infaq Konsumsi<br>Pembukaan Ashnaf 36 Titik</h2>
-    <form id="infaqForm">
+    <form action="https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec" method="POST" enctype="multipart/form-data">
       <label>Nama KTP:</label>
       <input type="text" name="nama_ktp" required />
 
@@ -81,53 +76,6 @@
 
       <button type="submit">Kirim & Konfirmasi</button>
     </form>
-
-    <div id="loading"></div>
   </div>
-
-  <script>
-    const form = document.getElementById("infaqForm");
-    const loading = document.getElementById("loading");
-
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      loading.innerHTML = "⏳ Mengirim data, mohon tunggu...";
-
-      const formData = new FormData(form);
-
-      try {
-        const response = await fetch(
-          "https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec",
-          { method: "POST", body: formData }
-        );
-
-        const result = await response.json();
-
-        if (result.status === "ok") {
-          loading.innerHTML = `
-            <p>✅ Data berhasil dikirim!</p>
-            <a href="${result.wa_url}" target="_blank" style="
-              display: inline-block;
-              background: #25d366;
-              color: #fff;
-              padding: 12px 24px;
-              border-radius: 6px;
-              text-decoration: none;
-              font-weight: bold;
-              margin-top: 10px;
-            ">
-              Klik di sini untuk konfirmasi via WhatsApp Admin
-            </a>
-          `;
-          form.reset(); // reset form setelah submit
-        } else {
-          loading.innerHTML = "❌ Gagal: " + result.message;
-        }
-
-      } catch (err) {
-        loading.innerHTML = "❌ Error: " + err.message;
-      }
-    });
-  </script>
 </body>
 </html>
