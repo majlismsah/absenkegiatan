@@ -5,23 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Infaq Konsumsi - Ashnaf 36 Titik</title>
   <style>
-    body { font-family: sans-serif; background: #f7f7f7; padding: 20px; }
-    .container {
-      background: #fff; padding: 24px; border-radius: 10px;
-      max-width: 500px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      padding: 20px;
     }
-    h2 { text-align: center; color: #2c3e50; }
-    label { margin-top: 15px; display: block; font-weight: bold; }
+    .container {
+      background: #fff;
+      padding: 24px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    label {
+      margin-top: 15px;
+      display: block;
+      font-weight: bold;
+    }
     input, select {
-      width: 100%; padding: 10px; margin-top: 5px;
-      border: 1px solid #ccc; border-radius: 6px;
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
     }
     button {
-      background: #27ae60; color: #fff; padding: 12px;
-      width: 100%; margin-top: 20px;
-      border: none; border-radius: 6px; font-size: 16px; cursor: pointer;
+      background: #27ae60;
+      color: #fff;
+      padding: 12px;
+      width: 100%;
+      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
     }
-    #loading { text-align: center; margin-top: 10px; display: none; color: #777; }
+    #loading {
+      text-align: center;
+      margin-top: 20px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -52,8 +80,9 @@
       <input type="file" name="bukti_transfer" accept="image/*,application/pdf" required />
 
       <button type="submit">Kirim & Konfirmasi</button>
-      <div id="loading">Mengirim data, mohon tunggu...</div>
     </form>
+
+    <div id="loading"></div>
   </div>
 
   <script>
@@ -62,7 +91,7 @@
 
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
-      loading.style.display = "block";
+      loading.innerHTML = "⏳ Mengirim data, mohon tunggu...";
 
       const formData = new FormData(form);
 
@@ -71,31 +100,32 @@
           "https://script.google.com/macros/s/AKfycbxZdRWDbxynI_jvp7L16N8QQU6mTw3syGJIaA25mJiUWCKFI-_3jFzw0qfK3MkKOnAQiw/exec",
           { method: "POST", body: formData }
         );
-        const result = await response.json();
-        if (result.status === "ok") {
-  const waLink = document.createElement("a");
-  waLink.href = result.wa_url;
-  waLink.target = "_blank";
-  waLink.innerText = "Klik di sini untuk buka WhatsApp Admin";
-  waLink.style.display = "inline-block";
-  waLink.style.marginTop = "20px";
-  waLink.style.background = "#25d366";
-  waLink.style.color = "#fff";
-  waLink.style.padding = "12px";
-  waLink.style.borderRadius = "6px";
-  waLink.style.textDecoration = "none";
-  waLink.style.textAlign = "center";
-  document.getElementById("loading").innerHTML = "";
-  document.getElementById("loading").appendChild(waLink);
-}
 
+        const result = await response.json();
+
+        if (result.status === "ok") {
+          loading.innerHTML = `
+            <p>✅ Data berhasil dikirim!</p>
+            <a href="${result.wa_url}" target="_blank" style="
+              display: inline-block;
+              background: #25d366;
+              color: #fff;
+              padding: 12px 24px;
+              border-radius: 6px;
+              text-decoration: none;
+              font-weight: bold;
+              margin-top: 10px;
+            ">
+              Klik di sini untuk konfirmasi via WhatsApp Admin
+            </a>
+          `;
+          form.reset(); // reset form setelah submit
         } else {
-          alert("Terjadi kesalahan: " + result.message);
+          loading.innerHTML = "❌ Gagal: " + result.message;
         }
+
       } catch (err) {
-        alert("Gagal mengirim form: " + err.message);
-      } finally {
-        loading.style.display = "none";
+        loading.innerHTML = "❌ Error: " + err.message;
       }
     });
   </script>
