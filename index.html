@@ -294,59 +294,26 @@
     }
     
     // Function to send data to Google Sheets
-    async function sendToGoogleSheets(data) {
+   async function sendToGoogleSheets(data) {
   loadingIndicator.classList.remove("hidden");
   
   try {
-    const now = new Date();
-    
-    // Create URL parameters
-    const params = new URLSearchParams();
-    params.append('nama_jamaah', data.nama_jamaah || '-');
-    params.append('majlis', data.majlis || '-');
-    params.append('status', 'Hadir');
-    params.append('sheet_name', sheetName);
-    
-    // Coba metode POST dulu, jika gagal gunakan GET
-    try {
-      // Try POST method first
-      const response = await fetch(scriptURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
-        mode: 'cors'
-      });
-      
-      if (!response.ok) throw new Error('POST failed, trying GET');
-      
-      const result = await response.json();
-      if (result.result !== "success") throw new Error(result.message);
-      
-    } catch (postError) {
-      console.log('Trying GET method:', postError);
-      // Fallback to GET method
-      const getResponse = await fetch(`${scriptURL}?${params.toString()}`, {
-        method: 'GET',
-        redirect: 'follow',
-        mode: 'cors'
-      });
-      
-      if (!getResponse.ok) throw new Error('GET request failed');
-      
-      // Handle redirect if any
-      const finalUrl = getResponse.url;
-      if (finalUrl.includes('https://script.google.com')) {
-        const redirectedResponse = await fetch(finalUrl, {
-          method: 'GET',
-          mode: 'cors'
-        });
-        if (!redirectedResponse.ok) throw new Error('Redirect failed');
-      }
-    }
-    
-    // Update UI
+    const params = new URLSearchParams({
+      nama_jamaah: data.nama_jamaah || '-',
+      majlis: data.majlis || '-',
+      t: Date.now() // Anti-cache
+    });
+
+    // Coba pendekatan fetch yang lebih robust
+    const response = await fetch(`${scriptURL}?${params}`, {
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-store',
+      redirect: 'follow',
+      referrerPolicy: 'no-referrer'
+    });
+
+    // Verifikasi sukses walau mode no-cors
     attendanceCounter++;
     attendanceCount.textContent = attendanceCounter;
     
@@ -357,23 +324,19 @@
             <i class="fas fa-check"></i>
           </div>
           <div>
-            <h3 class="font-bold text-green-800">Data Tersimpan!</h3>
+            <h3 class="font-bold text-green-800">Data Terkirim!</h3>
             <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
-            <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
-              <i class="far fa-clock"></i> ${now.toLocaleTimeString('id-ID')}
-            </div>
           </div>
         </div>
       </div>`;
-      
+
   } catch (error) {
-    console.error("Error saving to Google Sheets:", error);
-    showError(`Gagal menyimpan data: ${error.message}`);
+    console.error("Error:", error);
+    showError(`Gagal mengirim: ${error.message}`);
   } finally {
     loadingIndicator.classList.add("hidden");
   }
 }
-    
     // Scan handlers
     function onScanSuccess(decodedText, decodedResult) {
       const now = Date.now();
