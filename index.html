@@ -1,70 +1,328 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Scan QR Jamaah</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        text-align: center;
-        padding: 20px;
-      }
-      #reader {
-        width: 100%;
-        max-width: 400px;
-        margin: auto;
-      }
-      #status {
-        margin-top: 20px;
-        font-size: 18px;
-        font-weight: bold;
-      }
-    </style>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  </head>
-  <body>
-    <h1>📷 Scan QR Jamaah</h1>
-    <div id="reader"></div>
-    <div id="status">Menunggu scan...</div>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Scan QR Jamaah - Sistem Kehadiran</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    .scanner-container {
+      position: relative;
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    
+    .scanner-frame {
+      width: 250px;
+      height: 250px;
+      border: 3px solid rgba(59, 130, 246, 0.5);
+      border-radius: 12px;
+      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { border-color: rgba(59, 130, 246, 0.5); }
+      50% { border-color: rgba(59, 130, 246, 0.8); }
+      100% { border-color: rgba(59, 130, 246, 0.5); }
+    }
+    
+    .success-animation {
+      animation: successFlash 1s;
+    }
+    
+    @keyframes successFlash {
+      0% { background-color: rgba(52, 211, 153, 0.1); }
+      50% { background-color: rgba(52, 211, 153, 0.3); }
+      100% { background-color: rgba(52, 211, 153, 0.1); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center justify-start py-6 px-4">
 
-    <script>
-      const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // ganti
+  <!-- Header with Logo -->
+  <header class="text-center mb-8 w-full max-w-md">
+    <div class="flex items-center justify-center gap-3 mb-3">
+      <div class="bg-blue-600 text-white p-3 rounded-full">
+        <i class="fas fa-qrcode text-2xl"></i>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Scan Kehadiran Jamaah</h1>
+        <p class="text-sm text-gray-500">Arahkan kamera ke QR Code yang ditunjukkan jamaah</p>
+      </div>
+    </div>
+    
+    <div class="flex justify-center gap-2 mb-4">
+      <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+        <i class="fas fa-users"></i>
+        <span id="attendanceCount">0</span> Hadir
+      </div>
+      <div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+        <i class="fas fa-clock"></i>
+        <span id="currentTime">--:--:--</span>
+      </div>
+    </div>
+  </header>
 
-      function sendData(qrData) {
-        fetch(scriptURL, {
-          method: "POST",
-          body: new URLSearchParams({ data: qrData })
-        })
-          .then(response => {
-            if (response.ok) {
-              document.getElementById("status").innerText = "✅ Kehadiran dicatat: " + qrData;
-            } else {
-              document.getElementById("status").innerText = "❌ Gagal menyimpan";
-            }
-          })
-          .catch(error => {
-            document.getElementById("status").innerText = "❌ Error: " + error;
-          });
-      }
+  <!-- Scanner Section -->
+  <div class="w-full max-w-md mb-6">
+    <div class="scanner-container bg-gray-100 shadow-xl rounded-2xl p-4 border border-gray-200">
+      <div id="reader" class="rounded-xl overflow-hidden relative"></div>
+      <div class="scanner-overlay">
+        <div class="scanner-frame"></div>
+      </div>
+    </div>
+    
+    <div class="flex justify-center mt-4 gap-3">
+      <button id="toggleCamera" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
+        <i class="fas fa-camera-rotate mr-1"></i> Ganti Kamera
+      </button>
+      <button id="toggleFlash" class="bg-white text-gray-600 border border-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition">
+        <i class="fas fa-lightbulb mr-1"></i> Lampu
+      </button>
+    </div>
+  </div>
 
-      const html5QrCode = new Html5Qrcode("reader");
+  <!-- Scan Results -->
+  <div id="hasil" class="w-full max-w-md"></div>
+  
+  <!-- Recent Scans -->
+  <div class="w-full max-w-md mt-4 hidden" id="recentScansSection">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-3">
+      <h3 class="font-medium text-gray-700 mb-2 flex items-center gap-2">
+        <i class="fas fa-history text-blue-600"></i>
+        Scan Terakhir
+      </h3>
+      <div id="recentScans" class="space-y-2"></div>
+    </div>
+  </div>
 
-      Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-          const cameraId = devices[0].id;
-          html5QrCode.start(
-            cameraId,
-            { fps: 10, qrbox: 250 },
-            qrCodeMessage => {
-              sendData(qrCodeMessage);
-              html5QrCode.stop(); // stop once scanned
-            },
-            errorMessage => {
-              // console.log("Scanning error", errorMessage);
-            }
-          );
-        }
+  <!-- Beep Sound -->
+  <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
+
+  <script>
+    // DOM Elements
+    const beep = document.getElementById("beepSound");
+    const successSound = document.getElementById("successSound");
+    const hasil = document.getElementById("hasil");
+    const toggleCameraBtn = document.getElementById("toggleCamera");
+    const toggleFlashBtn = document.getElementById("toggleFlash");
+    const attendanceCount = document.getElementById("attendanceCount");
+    const currentTime = document.getElementById("currentTime");
+    const recentScansSection = document.getElementById("recentScansSection");
+    const recentScans = document.getElementById("recentScans");
+    
+    // Variables
+    let html5QrCode;
+    let currentCameraId = null;
+    let cameras = [];
+    let scanHistory = [];
+    let attendanceCounter = 0;
+    
+    // Update current time
+    function updateTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
       });
-    </script>
-  </body>
+      currentTime.textContent = timeString;
+    }
+    
+    setInterval(updateTime, 1000);
+    updateTime();
+    
+    // Camera functions
+    async function getCameras() {
+      try {
+        cameras = await Html5Qrcode.getCameras();
+        if (cameras.length > 0) {
+          currentCameraId = cameras[0].id;
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Error getting cameras:", error);
+        showError("Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.");
+        return false;
+      }
+    }
+    
+    async function startScanner(cameraId = null) {
+      const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+      };
+      
+      try {
+        if (!cameraId) {
+          cameraId = { facingMode: "environment" };
+        }
+        
+        await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
+        return true;
+      } catch (error) {
+        console.error("Error starting scanner:", error);
+        showError("Gagal memulai scanner. Coba muat ulang halaman.");
+        return false;
+      }
+    }
+    
+    async function toggleCamera() {
+      if (cameras.length < 2) {
+        showError("Hanya ditemukan 1 kamera");
+        return;
+      }
+      
+      try {
+        await html5QrCode.stop();
+        const currentIndex = cameras.findIndex(cam => cam.id === currentCameraId);
+        const nextIndex = (currentIndex + 1) % cameras.length;
+        currentCameraId = cameras[nextIndex].id;
+        await startScanner(currentCameraId);
+        
+        // Update button text
+        const cameraLabel = cameras[nextIndex].label.toLowerCase();
+        let cameraType = "Belakang";
+        if (cameraLabel.includes("front")) {
+          cameraType = "Depan";
+        }
+        toggleCameraBtn.innerHTML = `<i class="fas fa-camera-rotate mr-1"></i> Kamera ${cameraType}`;
+      } catch (error) {
+        console.error("Error toggling camera:", error);
+      }
+    }
+    
+    async function toggleFlash() {
+      try {
+        const track = html5QrCode.getRunningTrack();
+        if (track && track.getCapabilities().torch) {
+          await track.applyConstraints({
+            advanced: [{torch: !track.getSettings().torch}]
+          });
+          toggleFlashBtn.classList.toggle("text-yellow-500");
+          toggleFlashBtn.classList.toggle("border-yellow-500");
+        } else {
+          showError("Lampu flash tidak tersedia");
+        }
+      } catch (error) {
+        console.error("Error toggling flash:", error);
+      }
+    }
+    
+    // Scan handlers
+    function onScanSuccess(decodedText, decodedResult) {
+      // Play sounds
+      beep.play().catch(e => console.log("Audio play error:", e));
+      successSound.play().catch(e => console.log("Audio play error:", e));
+      
+      // Add to scan history
+      const scanTime = new Date().toLocaleTimeString('id-ID', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+      
+      const scanData = {
+        text: decodedText,
+        time: scanTime
+      };
+      
+      scanHistory.unshift(scanData);
+      if (scanHistory.length > 5) {
+        scanHistory.pop();
+      }
+      
+      // Update UI
+      attendanceCounter++;
+      attendanceCount.textContent = attendanceCounter;
+      
+      hasil.innerHTML = `
+        <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+          <div class="flex items-start gap-3">
+            <div class="bg-green-100 text-green-800 p-2 rounded-full">
+              <i class="fas fa-check"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-green-800">Berhasil Scan!</h3>
+              <p class="text-sm text-gray-600 mt-1">${decodedText}</p>
+              <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                <i class="far fa-clock"></i> ${scanTime}
+              </div>
+            </div>
+          </div>
+        </div>`;
+      
+      // Update recent scans
+      updateRecentScans();
+      recentScansSection.classList.remove("hidden");
+    }
+    
+    function onScanFailure(error) {
+      // Mostly silent - we'll show errors only when really needed
+      console.log("Scan error:", error);
+    }
+    
+    function updateRecentScans() {
+      recentScans.innerHTML = scanHistory.map(scan => `
+        <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+          <div class="text-sm truncate flex-1">${scan.text}</div>
+          <div class="text-xs text-gray-500 ml-2">${scan.time}</div>
+        </div>
+      `).join("");
+    }
+    
+    function showError(message) {
+      hasil.innerHTML = `
+        <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+          <div class="flex items-start gap-3">
+            <div class="bg-red-100 text-red-800 p-2 rounded-full">
+              <i class="fas fa-exclamation"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-red-800">Terjadi Kesalahan</h3>
+              <p class="text-sm text-gray-600 mt-1">${message}</p>
+            </div>
+          </div>
+        </div>`;
+    }
+    
+    // Initialize scanner
+    async function initScanner() {
+      html5QrCode = new Html5Qrcode("reader");
+      
+      if (await getCameras()) {
+        await startScanner(currentCameraId);
+      }
+    }
+    
+    // Event listeners
+    toggleCameraBtn.addEventListener("click", toggleCamera);
+    toggleFlashBtn.addEventListener("click", toggleFlash);
+    
+    // Initialize
+    document.addEventListener("DOMContentLoaded", initScanner);
+  </script>
+</body>
 </html>
