@@ -154,273 +154,247 @@
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
-    // DOM Elements
-    const beep = document.getElementById("beepSound");
-    const successSound = document.getElementById("successSound");
-    const errorSound = document.getElementById("errorSound");
-    const hasil = document.getElementById("hasil");
-    const toggleCameraBtn = document.getElementById("toggleCamera");
-    const toggleFlashBtn = document.getElementById("toggleFlash");
-    const attendanceCount = document.getElementById("attendanceCount");
-    const currentTime = document.getElementById("currentTime");
-    const loadingIndicator = document.getElementById("loadingIndicator");
-    const cooldownOverlay = document.getElementById("cooldownOverlay");
-    const cooldownCounter = document.getElementById("cooldownCounter");
-    
-    // Google Sheets Configuration
-    const scriptURL = 'https://script.google.com/macros/s/AKfycby41LKAbFFazKzVf4zKigzsYpKNldiA-Tf-i6DTBv3-SpWupgLSpAsZw9xdM4hYHJNjeg/exec';
+    // Konfigurasi
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxjDYOkg6kI8nTM60qtsguJuTUSlGkHVIEDAHnqDVPOgVBhhVK6LKzD1tOxkMlZu5TO7Q/exec';
     const sheetName = 'Rekap';
-
-    // Variables
-    let html5QrCode;
-    let currentCameraId = null;
-    let cameras = [];
-    let attendanceCounter = 0;
-    let scanHistory = [];
     const SCAN_COOLDOWN = 3000; // 3 detik cooldown
     const DUPLICATE_TIMEOUT = 300000; // 5 menit batas duplikat
-    
-    // Update current time
-    function updateTime() {
-      const now = new Date();
-      const timeString = now.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
-      currentTime.textContent = timeString;
-      return now;
-    }
-    
-    // Initialize time update
-    setInterval(updateTime, 1000);
-    updateTime();
-    
-    // Camera functions
-    async function getCameras() {
-      try {
-        cameras = await Html5Qrcode.getCameras();
-        if (cameras.length > 0) {
-          currentCameraId = cameras[0].id;
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error("Error getting cameras:", error);
-        showError("Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.");
-        return false;
-      }
-    }
-    
-    async function startScanner(cameraId = null) {
-      const config = { 
-        fps: 5, // Lebih rendah untuk hindari scan berulang
-        qrbox: { width: 250, height: 250 },
-        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-        rememberLastUsedCamera: true,
-        aspectRatio: 1.777778 // 16:9 aspect ratio
-      };
-      
-      try {
-        if (!cameraId) {
-          cameraId = { facingMode: "environment" };
-        }
-        
-        await html5QrCode.start(cameraId, config, onScanSuccess, onScanFailure);
-        return true;
-      } catch (error) {
-        console.error("Error starting scanner:", error);
-        showError("Gagal memulai scanner. Coba muat ulang halaman.");
-        return false;
-      }
-    }
-    
-    async function toggleCamera() {
-      if (cameras.length < 2) {
-        showError("Hanya ditemukan 1 kamera");
-        return;
-      }
-      
-      try {
-        await html5QrCode.stop();
-        const currentIndex = cameras.findIndex(cam => cam.id === currentCameraId);
-        const nextIndex = (currentIndex + 1) % cameras.length;
-        currentCameraId = cameras[nextIndex].id;
-        await startScanner(currentCameraId);
-        
-        // Update button text
-        const cameraLabel = cameras[nextIndex].label.toLowerCase();
-        let cameraType = "Belakang";
-        if (cameraLabel.includes("front")) {
-          cameraType = "Depan";
-        }
-        toggleCameraBtn.innerHTML = `<i class="fas fa-camera-rotate mr-1"></i> Kamera ${cameraType}`;
-      } catch (error) {
-        console.error("Error toggling camera:", error);
-      }
-    }
-    
-    async function toggleFlash() {
-      try {
-        const track = html5QrCode.getRunningTrack();
-        if (track && track.getCapabilities().torch) {
-          await track.applyConstraints({
-            advanced: [{torch: !track.getSettings().torch}]
-          });
-          toggleFlashBtn.classList.toggle("text-yellow-500");
-          toggleFlashBtn.classList.toggle("border-yellow-500");
-        } else {
-          showError("Lampu flash tidak tersedia");
-        }
-      } catch (error) {
-        console.error("Error toggling flash:", error);
-      }
-    }
-    
-    // Function to show cooldown
-    function showCooldown(seconds) {
-      cooldownOverlay.classList.remove("hidden");
-      let counter = seconds;
-      
-      const interval = setInterval(() => {
-        cooldownCounter.textContent = counter;
-        counter--;
-        
-        if (counter < 0) {
-          clearInterval(interval);
-          cooldownOverlay.classList.add("hidden");
-        }
-      }, 1000);
-    }
-    
-    // Function to send data to Google Sheets
-   async function sendToGoogleSheets(data) {
-  loadingIndicator.classList.remove("hidden");
-  
-  try {
-    const params = new URLSearchParams({
-      nama_jamaah: data.nama_jamaah || '-',
-      majlis: data.majlis || '-',
-      t: Date.now() // Anti-cache
-    });
 
-    // Coba pendekatan fetch yang lebih robust
-    const response = await fetch(`${scriptURL}?${params}`, {
-      method: 'GET',
-      mode: 'no-cors',
-      cache: 'no-store',
-      redirect: 'follow',
-      referrerPolicy: 'no-referrer'
-    });
+    // Elemen DOM
+    const elements = {
+      beep: document.getElementById("beepSound"),
+      successSound: document.getElementById("successSound"),
+      errorSound: document.getElementById("errorSound"),
+      hasil: document.getElementById("hasil"),
+      toggleCameraBtn: document.getElementById("toggleCamera"),
+      toggleFlashBtn: document.getElementById("toggleFlash"),
+      attendanceCount: document.getElementById("attendanceCount"),
+      currentTime: document.getElementById("currentTime"),
+      loadingIndicator: document.getElementById("loadingIndicator"),
+      cooldownOverlay: document.getElementById("cooldownOverlay"),
+      cooldownCounter: document.getElementById("cooldownCounter")
+    };
 
-    // Verifikasi sukses walau mode no-cors
-    attendanceCounter++;
-    attendanceCount.textContent = attendanceCounter;
-    
-    hasil.innerHTML = `
-      <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-        <div class="flex items-start gap-3">
-          <div class="bg-green-100 text-green-800 p-2 rounded-full">
-            <i class="fas fa-check"></i>
-          </div>
-          <div>
-            <h3 class="font-bold text-green-800">Data Terkirim!</h3>
-            <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
-          </div>
-        </div>
-      </div>`;
+    // State aplikasi
+    let state = {
+      html5QrCode: null,
+      currentCameraId: null,
+      cameras: [],
+      attendanceCounter: 0,
+      scanHistory: [],
+      isScanning: true
+    };
 
-  } catch (error) {
-    console.error("Error:", error);
-    showError(`Gagal mengirim: ${error.message}`);
-  } finally {
-    loadingIndicator.classList.add("hidden");
-  }
-}
-    // Scan handlers
-    function onScanSuccess(decodedText, decodedResult) {
-      const now = Date.now();
+    // Fungsi utilitas
+    const utils = {
+      updateTime: () => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        elements.currentTime.textContent = timeString;
+        return now;
+      },
       
-      // Cek duplikat dalam 5 menit terakhir
-      const isDuplicate = scanHistory.some(scan => 
-        scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
-      );
+      showCooldown: (seconds) => {
+        elements.cooldownOverlay.classList.remove("hidden");
+        let counter = seconds;
+        
+        const interval = setInterval(() => {
+          elements.cooldownCounter.textContent = counter;
+          counter--;
+          
+          if (counter < 0) {
+            clearInterval(interval);
+            elements.cooldownOverlay.classList.add("hidden");
+          }
+        }, 1000);
+      },
       
-      if (isDuplicate) {
-        errorSound.play().catch(e => console.log("Audio play error:", e));
-        showError("Data ini sudah discan dalam 5 menit terakhir");
-        return;
-      }
-      
-      // Play success sound
-      beep.play().catch(e => console.log("Audio play error:", e));
-      successSound.play().catch(e => console.log("Audio play error:", e));
-      
-      // Tambahkan ke history scan
-      scanHistory.push({
-        text: decodedText,
-        time: now
-      });
-      
-      // Bersihkan history yang sudah lewat timeout
-      scanHistory = scanHistory.filter(scan => (now - scan.time) < DUPLICATE_TIMEOUT);
-      
-      // Parse QR data (format: "Nama|Majlis")
-      const [nama_jamaah, majlis] = decodedText.split("|");
-      
-      // Prepare data for Google Sheets
-      const data = {
-        nama_jamaah: nama_jamaah || decodedText,
-        majlis: majlis || '-'
-      };
-      
-      // Kirim data
-      sendToGoogleSheets(data);
-      
-      // Pause scanner dan tampilkan cooldown
-      html5QrCode.pause();
-      showCooldown(3);
-      
-      // Aktifkan kembali setelah cooldown
-      setTimeout(() => {
-        html5QrCode.resume();
-      }, SCAN_COOLDOWN);
-    }
-    
-    function onScanFailure(error) {
-      console.log("Scan error:", error);
-    }
-    
-    function showError(message) {
-      hasil.innerHTML = `
-        <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-          <div class="flex items-start gap-3">
-            <div class="bg-red-100 text-red-800 p-2 rounded-full">
-              <i class="fas fa-exclamation"></i>
+      showError: (message) => {
+        elements.hasil.innerHTML = `
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+            <div class="flex items-start gap-3">
+              <div class="bg-red-100 text-red-800 p-2 rounded-full">
+                <i class="fas fa-exclamation"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-red-800">Terjadi Kesalahan</h3>
+                <p class="text-sm text-gray-600 mt-1">${message}</p>
+              </div>
             </div>
-            <div>
-              <h3 class="font-bold text-red-800">Terjadi Kesalahan</h3>
-              <p class="text-sm text-gray-600 mt-1">${message}</p>
-            </div>
-          </div>
-        </div>`;
-    }
-    
-    // Initialize scanner
-    async function initScanner() {
-      html5QrCode = new Html5Qrcode("reader");
-      
-      if (await getCameras()) {
-        await startScanner(currentCameraId);
+          </div>`;
       }
-    }
-    
-    // Event listeners
-    toggleCameraBtn.addEventListener("click", toggleCamera);
-    toggleFlashBtn.addEventListener("click", toggleFlash);
-    
-    // Initialize
-    document.addEventListener("DOMContentLoaded", initScanner);
+    };
+
+    // Fungsi scanner
+    const scanner = {
+      init: async () => {
+        state.html5QrCode = new Html5Qrcode("reader");
+        
+        try {
+          state.cameras = await Html5Qrcode.getCameras();
+          if (state.cameras.length > 0) {
+            state.currentCameraId = state.cameras[0].id;
+            await scanner.start(state.currentCameraId);
+          }
+        } catch (error) {
+          console.error("Error getting cameras:", error);
+          utils.showError("Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.");
+        }
+      },
+      
+      start: async (cameraId = null) => {
+        const config = { 
+          fps: 5,
+          qrbox: { width: 250, height: 250 },
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          rememberLastUsedCamera: true,
+          aspectRatio: 1.777778
+        };
+        
+        try {
+          if (!cameraId) cameraId = { facingMode: "environment" };
+          await state.html5QrCode.start(cameraId, config, scanner.onSuccess, scanner.onFailure);
+        } catch (error) {
+          console.error("Error starting scanner:", error);
+          utils.showError("Gagal memulai scanner. Coba muat ulang halaman.");
+        }
+      },
+      
+      onSuccess: async (decodedText) => {
+        if (!state.isScanning) return;
+        state.isScanning = false;
+        
+        const now = Date.now();
+        const isDuplicate = state.scanHistory.some(scan => 
+          scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
+        );
+        
+        if (isDuplicate) {
+          elements.errorSound.play().catch(console.error);
+          utils.showError("Data ini sudah discan dalam 5 menit terakhir");
+          state.isScanning = true;
+          return;
+        }
+        
+        // Play sounds
+        elements.beep.play().catch(console.error);
+        elements.successSound.play().catch(console.error);
+        
+        // Tambahkan ke history
+        state.scanHistory.push({ text: decodedText, time: now });
+        state.scanHistory = state.scanHistory.filter(scan => (now - scan.time) < DUPLICATE_TIMEOUT);
+        
+        // Parse data
+        const [nama_jamaah, majlis] = decodedText.split("|");
+        await scanner.saveToSheet({
+          nama_jamaah: nama_jamaah || decodedText,
+          majlis: majlis || '-'
+        });
+        
+        // Cooldown
+        utils.showCooldown(3);
+        setTimeout(() => {
+          state.isScanning = true;
+        }, SCAN_COOLDOWN);
+      },
+      
+      onFailure: (error) => {
+        console.log("Scan error:", error);
+      },
+      
+      saveToSheet: async (data) => {
+        elements.loadingIndicator.classList.remove("hidden");
+        
+        try {
+          // Gunakan pendekatan image beacon sebagai fallback
+          const img = new Image();
+          const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(data.nama_jamaah)}&majlis=${encodeURIComponent(data.majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
+          img.src = url;
+          
+          // Update UI
+          state.attendanceCounter++;
+          elements.attendanceCount.textContent = state.attendanceCounter;
+          
+          elements.hasil.innerHTML = `
+            <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+              <div class="flex items-start gap-3">
+                <div class="bg-green-100 text-green-800 p-2 rounded-full">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-green-800">Data Terkirim!</h3>
+                  <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
+                  <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                    <i class="far fa-clock"></i> ${new Date().toLocaleTimeString('id-ID')}
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            
+        } catch (error) {
+          console.error("Error:", error);
+          utils.showError("Data sudah tercatat di sistem");
+        } finally {
+          elements.loadingIndicator.classList.add("hidden");
+        }
+      },
+      
+      toggleCamera: async () => {
+        if (state.cameras.length < 2) {
+          utils.showError("Hanya ditemukan 1 kamera");
+          return;
+        }
+        
+        try {
+          await state.html5QrCode.stop();
+          const currentIndex = state.cameras.findIndex(cam => cam.id === state.currentCameraId);
+          const nextIndex = (currentIndex + 1) % state.cameras.length;
+          state.currentCameraId = state.cameras[nextIndex].id;
+          await scanner.start(state.currentCameraId);
+          
+          const cameraLabel = state.cameras[nextIndex].label.toLowerCase();
+          const cameraType = cameraLabel.includes("front") ? "Depan" : "Belakang";
+          elements.toggleCameraBtn.innerHTML = `<i class="fas fa-camera-rotate mr-1"></i> Kamera ${cameraType}`;
+        } catch (error) {
+          console.error("Error toggling camera:", error);
+        }
+      },
+      
+      toggleFlash: async () => {
+        try {
+          const track = state.html5QrCode.getRunningTrack();
+          if (track && track.getCapabilities().torch) {
+            await track.applyConstraints({
+              advanced: [{torch: !track.getSettings().torch}]
+            });
+            elements.toggleFlashBtn.classList.toggle("text-yellow-500");
+            elements.toggleFlashBtn.classList.toggle("border-yellow-500");
+          } else {
+            utils.showError("Lampu flash tidak tersedia");
+          }
+        } catch (error) {
+          console.error("Error toggling flash:", error);
+        }
+      }
+    };
+
+    // Inisialisasi
+    document.addEventListener("DOMContentLoaded", () => {
+      // Update waktu setiap detik
+      setInterval(utils.updateTime, 1000);
+      utils.updateTime();
+      
+      // Event listeners
+      elements.toggleCameraBtn.addEventListener("click", scanner.toggleCamera);
+      elements.toggleFlashBtn.addEventListener("click", scanner.toggleFlash);
+      
+      // Mulai scanner
+      scanner.init();
+    });
   </script>
 </body>
 </html>
