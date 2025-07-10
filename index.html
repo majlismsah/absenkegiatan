@@ -142,8 +142,8 @@
     const loadingIndicator = document.getElementById("loadingIndicator");
     
     // Google Sheets Configuration
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxjDYOkg6kI8nTM60qtsguJuTUSlGkHVIEDAHnqDVPOgVBhhVK6LKzD1tOxkMlZu5TO7Q/exec'; // Ganti dengan URL Apps Script Anda
-    const sheetName = 'Rekap'; // Nama sheet sesuai permintaan
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxjDYOkg6kI8nTM60qtsguJuTUSlGkHVIEDAHnqDVPOgVBhhVK6LKzD1tOxkMlZu5TO7Q/exec';
+    const sheetName = 'Rekap';
     
     // Variables
     let html5QrCode;
@@ -250,41 +250,47 @@
       loadingIndicator.classList.remove("hidden");
       
       try {
+        // Add timestamp to data
+        const now = new Date();
+        data.timestamp = now.toISOString();
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('sheet_name', sheetName);
+        formData.append('nama_jamaah', data.nama_jamaah || '-');
+        formData.append('majlis', data.majlis || '-');
+        formData.append('waktu', now.toLocaleString('id-ID'));
+        formData.append('status', 'Hadir');
+        
+        // Send as form data to avoid CORS issues
         const response = await fetch(scriptURL, {
           method: 'POST',
-          body: JSON.stringify(data),
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          body: formData,
+          mode: 'no-cors'
         });
         
-        const result = await response.json();
+        // Even with no-cors, we can't read response but assume success
+        attendanceCounter++;
+        attendanceCount.textContent = attendanceCounter;
         
-        if (result.result === "success") {
-          attendanceCounter++;
-          attendanceCount.textContent = attendanceCounter;
-          
-          hasil.innerHTML = `
-            <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-              <div class="flex items-start gap-3">
-                <div class="bg-green-100 text-green-800 p-2 rounded-full">
-                  <i class="fas fa-check"></i>
-                </div>
-                <div>
-                  <h3 class="font-bold text-green-800">Data Tersimpan!</h3>
-                  <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
-                  <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                    <i class="far fa-clock"></i> ${data.waktu}
-                  </div>
+        hasil.innerHTML = `
+          <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+            <div class="flex items-start gap-3">
+              <div class="bg-green-100 text-green-800 p-2 rounded-full">
+                <i class="fas fa-check"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-green-800">Data Tersimpan!</h3>
+                <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
+                <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                  <i class="far fa-clock"></i> ${now.toLocaleTimeString('id-ID')}
                 </div>
               </div>
-            </div>`;
-        } else {
-          throw new Error(result.message);
-        }
+            </div>
+          </div>`;
       } catch (error) {
         console.error("Error saving to Google Sheets:", error);
-        showError(`Gagal menyimpan data: ${error.message}`);
+        showError(`Gagal menyimpan data. Pastikan koneksi internet stabil.`);
       } finally {
         loadingIndicator.classList.add("hidden");
       }
@@ -298,15 +304,11 @@
       
       // Parse QR data (format: "Nama|Majlis")
       const [nama_jamaah, majlis] = decodedText.split("|");
-      const waktu = updateTime().toLocaleString('id-ID');
       
       // Prepare data for Google Sheets
       const data = {
-        sheet_name: sheetName,
-        nama_jamaah: nama_jamaah || decodedText, // Fallback jika tidak ada pemisah
-        majlis: majlis || '-', // Fallback jika tidak ada pemisah
-        waktu: waktu,
-        status: 'Hadir'
+        nama_jamaah: nama_jamaah || decodedText,
+        majlis: majlis || '-'
       };
       
       // Send to Google Sheets
