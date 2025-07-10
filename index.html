@@ -1,62 +1,70 @@
 <!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scanner QR Absen</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.9/minified/html5-qrcode.min.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      text-align: center;
-      background-color: #f9f9f9;
-    }
-    #reader {
-      width: 300px;
-      margin: auto;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 1.2rem;
-      color: green;
-    }
-  </style>
-</head>
-<body>
-  <h2>📷 Scan QR Jamaah</h2>
-  <div id="reader"></div>
-  <div id="result"></div>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scan QR Jamaah</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 20px;
+      }
+      #reader {
+        width: 100%;
+        max-width: 400px;
+        margin: auto;
+      }
+      #status {
+        margin-top: 20px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+    </style>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  </head>
+  <body>
+    <h1>📷 Scan QR Jamaah</h1>
+    <div id="reader"></div>
+    <div id="status">Menunggu scan...</div>
 
-  <script>
-    const resultBox = document.getElementById("result");
+    <script>
+      const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec"; // ganti
 
-    function onScanSuccess(decodedText, decodedResult) {
-      resultBox.innerHTML = `✅ Terbaca: ${decodedText}`;
+      function sendData(qrData) {
+        fetch(scriptURL, {
+          method: "POST",
+          body: new URLSearchParams({ data: qrData })
+        })
+          .then(response => {
+            if (response.ok) {
+              document.getElementById("status").innerText = "✅ Kehadiran dicatat: " + qrData;
+            } else {
+              document.getElementById("status").innerText = "❌ Gagal menyimpan";
+            }
+          })
+          .catch(error => {
+            document.getElementById("status").innerText = "❌ Error: " + error;
+          });
+      }
 
-      // Kirim ke Apps Script Web App
-      fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
-        method: "POST",
-        body: JSON.stringify({ qr_text: decodedText }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((res) => res.text())
-      .then((msg) => {
-        resultBox.innerHTML += `<br>☑️ ${msg}`;
-      })
-      .catch((err) => {
-        resultBox.innerHTML += `<br>❌ Gagal kirim data`;
-        console.error(err);
+      const html5QrCode = new Html5Qrcode("reader");
+
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          const cameraId = devices[0].id;
+          html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            qrCodeMessage => {
+              sendData(qrCodeMessage);
+              html5QrCode.stop(); // stop once scanned
+            },
+            errorMessage => {
+              // console.log("Scanning error", errorMessage);
+            }
+          );
+        }
       });
-    }
-
-    const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start({ facingMode: "environment" }, {
-      fps: 10,
-      qrbox: 250
-    }, onScanSuccess);
-  </script>
-</body>
+    </script>
+  </body>
 </html>
