@@ -295,51 +295,84 @@
     
     // Function to send data to Google Sheets
     async function sendToGoogleSheets(data) {
-      loadingIndicator.classList.remove("hidden");
+  loadingIndicator.classList.remove("hidden");
+  
+  try {
+    const now = new Date();
+    
+    // Create URL parameters
+    const params = new URLSearchParams();
+    params.append('nama_jamaah', data.nama_jamaah || '-');
+    params.append('majlis', data.majlis || '-');
+    params.append('status', 'Hadir');
+    params.append('sheet_name', sheetName);
+    
+    // Coba metode POST dulu, jika gagal gunakan GET
+    try {
+      // Try POST method first
+      const response = await fetch(scriptURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+        mode: 'cors'
+      });
       
-      try {
-        const now = new Date();
-        
-        // Create URL parameters
-        const params = new URLSearchParams();
-        params.append('nama_jamaah', data.nama_jamaah || '-');
-        params.append('majlis', data.majlis || '-');
-        params.append('status', 'Hadir');
-        params.append('sheet_name', sheetName);
-        
-        // Send as GET request with parameters
-        const response = await fetch(`${scriptURL}?${params.toString()}`, {
+      if (!response.ok) throw new Error('POST failed, trying GET');
+      
+      const result = await response.json();
+      if (result.result !== "success") throw new Error(result.message);
+      
+    } catch (postError) {
+      console.log('Trying GET method:', postError);
+      // Fallback to GET method
+      const getResponse = await fetch(`${scriptURL}?${params.toString()}`, {
+        method: 'GET',
+        redirect: 'follow',
+        mode: 'cors'
+      });
+      
+      if (!getResponse.ok) throw new Error('GET request failed');
+      
+      // Handle redirect if any
+      const finalUrl = getResponse.url;
+      if (finalUrl.includes('https://script.google.com')) {
+        const redirectedResponse = await fetch(finalUrl, {
           method: 'GET',
-          redirect: 'follow'
+          mode: 'cors'
         });
-        
-        // Update UI
-        attendanceCounter++;
-        attendanceCount.textContent = attendanceCounter;
-        
-        hasil.innerHTML = `
-          <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-            <div class="flex items-start gap-3">
-              <div class="bg-green-100 text-green-800 p-2 rounded-full">
-                <i class="fas fa-check"></i>
-              </div>
-              <div>
-                <h3 class="font-bold text-green-800">Data Tersimpan!</h3>
-                <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
-                <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                  <i class="far fa-clock"></i> ${now.toLocaleTimeString('id-ID')}
-                </div>
-              </div>
-            </div>
-          </div>`;
-          
-      } catch (error) {
-        console.error("Error saving to Google Sheets:", error);
-        showError(`Gagal menyimpan data: ${error.message}`);
-      } finally {
-        loadingIndicator.classList.add("hidden");
+        if (!redirectedResponse.ok) throw new Error('Redirect failed');
       }
     }
+    
+    // Update UI
+    attendanceCounter++;
+    attendanceCount.textContent = attendanceCounter;
+    
+    hasil.innerHTML = `
+      <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+        <div class="flex items-start gap-3">
+          <div class="bg-green-100 text-green-800 p-2 rounded-full">
+            <i class="fas fa-check"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-green-800">Data Tersimpan!</h3>
+            <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
+            <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+              <i class="far fa-clock"></i> ${now.toLocaleTimeString('id-ID')}
+            </div>
+          </div>
+        </div>
+      </div>`;
+      
+  } catch (error) {
+    console.error("Error saving to Google Sheets:", error);
+    showError(`Gagal menyimpan data: ${error.message}`);
+  } finally {
+    loadingIndicator.classList.add("hidden");
+  }
+}
     
     // Scan handlers
     function onScanSuccess(decodedText, decodedResult) {
