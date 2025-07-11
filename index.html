@@ -8,88 +8,41 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-    
     body {
-      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Poppins', sans-serif;
     }
-    
-    .scanner-container {
-      position: relative;
-    }
-    
     .scanner-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
       pointer-events: none;
     }
-    
     .scanner-frame {
-      width: 250px;
-      height: 250px;
+      width: 250px; height: 250px;
       border: 3px solid rgba(59, 130, 246, 0.5);
       border-radius: 12px;
       box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
       animation: pulse 2s infinite;
     }
-    
     @keyframes pulse {
       0% { border-color: rgba(59, 130, 246, 0.5); }
       50% { border-color: rgba(59, 130, 246, 0.8); }
       100% { border-color: rgba(59, 130, 246, 0.5); }
     }
-    
-    .success-animation {
-      animation: successFlash 1s;
-    }
-    
-    @keyframes successFlash {
-      0% { background-color: rgba(52, 211, 153, 0.1); }
-      50% { background-color: rgba(52, 211, 153, 0.3); }
-      100% { background-color: rgba(52, 211, 153, 0.1); }
-    }
-    
     .loading-spinner {
       border: 3px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top: 3px solid #3b82f6;
-      width: 20px;
-      height: 20px;
+      width: 20px; height: 20px;
       animation: spin 1s linear infinite;
     }
-    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
-    .cooldown-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      border-radius: 12px;
-      z-index: 10;
-    }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center justify-start py-6 px-4">
-
-  <!-- Header Section -->
   <header class="text-center mb-8 w-full max-w-md">
     <div class="flex items-center justify-center gap-3 mb-3">
       <div class="bg-blue-600 text-white p-3 rounded-full">
@@ -97,50 +50,33 @@
       </div>
       <div>
         <h1 class="text-2xl font-bold text-gray-800">Scan Kehadiran Jamaah</h1>
-        <p class="text-sm text-gray-500">Arahkan kamera ke QR Code yang ditunjukkan jamaah</p>
+        <p class="text-sm text-gray-500">Arahkan kamera ke QR Code</p>
       </div>
     </div>
-    
     <div class="flex justify-center gap-2 mb-4">
       <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-        <i class="fas fa-users"></i>
-        <span id="attendanceCount">0</span> Hadir
+        <i class="fas fa-users"></i> <span id="attendanceCount">0</span> Hadir
       </div>
       <div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-        <i class="fas fa-clock"></i>
-        <span id="currentTime">--:--:--</span>
+        <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
       </div>
     </div>
   </header>
 
-  <!-- Scanner Section -->
-  <div class="w-full max-w-md mb-6">
-    <div class="scanner-container bg-gray-100 shadow-xl rounded-2xl p-4 border border-gray-200 relative">
+  <div class="w-full max-w-md mb-6 relative">
+    <div class="bg-gray-100 shadow-xl rounded-2xl p-4 border border-gray-200 relative">
       <div id="reader" class="rounded-xl overflow-hidden relative"></div>
-      <div class="scanner-overlay">
-        <div class="scanner-frame"></div>
-      </div>
-      <div id="cooldownOverlay" class="cooldown-overlay hidden">
-        <div class="text-xl mb-2">Tunggu sebentar</div>
-        <div id="cooldownCounter" class="text-3xl">3</div>
-        <div class="text-sm mt-2">Sebelum scan berikutnya</div>
-      </div>
+      <div class="scanner-overlay"><div class="scanner-frame"></div></div>
     </div>
-    
     <div class="flex justify-center mt-4 gap-3">
       <button id="toggleCamera" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
         <i class="fas fa-camera-rotate mr-1"></i> Ganti Kamera
       </button>
-      <button id="toggleFlash" class="bg-white text-gray-600 border border-gray-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-50 transition">
-        <i class="fas fa-lightbulb mr-1"></i> Lampu
-      </button>
     </div>
   </div>
 
-  <!-- Scan Results -->
   <div id="hasil" class="w-full max-w-md"></div>
-  
-  <!-- Loading Indicator -->
+
   <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-xl shadow-lg text-center">
       <div class="loading-spinner mx-auto mb-4"></div>
@@ -148,34 +84,27 @@
     </div>
   </div>
 
-  <!-- Audio Elements -->
+  <!-- Suara -->
   <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
   <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
-    // Konfigurasi
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
     const sheetName = 'Rekap';
-    const SCAN_COOLDOWN = 3000; // 3 detik cooldown
-    const DUPLICATE_TIMEOUT = 300000; // 5 menit batas duplikat
+    const DUPLICATE_TIMEOUT = 300000;
 
-    // Elemen DOM
     const elements = {
       beep: document.getElementById("beepSound"),
       successSound: document.getElementById("successSound"),
       errorSound: document.getElementById("errorSound"),
       hasil: document.getElementById("hasil"),
       toggleCameraBtn: document.getElementById("toggleCamera"),
-      toggleFlashBtn: document.getElementById("toggleFlash"),
       attendanceCount: document.getElementById("attendanceCount"),
       currentTime: document.getElementById("currentTime"),
       loadingIndicator: document.getElementById("loadingIndicator"),
-      cooldownOverlay: document.getElementById("cooldownOverlay"),
-      cooldownCounter: document.getElementById("cooldownCounter")
     };
 
-    // State aplikasi
     let state = {
       html5QrCode: null,
       currentCameraId: null,
@@ -185,214 +114,102 @@
       isScanning: true
     };
 
-    // Fungsi utilitas
-    const utils = {
-      updateTime: () => {
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('id-ID', {
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-        elements.currentTime.textContent = timeString;
-        return now;
-      },
-      
-      showCooldown: (seconds) => {
-        elements.cooldownOverlay.classList.remove("hidden");
-        let counter = seconds;
-        
-        const interval = setInterval(() => {
-          elements.cooldownCounter.textContent = counter;
-          counter--;
-          
-          if (counter < 0) {
-            clearInterval(interval);
-            elements.cooldownOverlay.classList.add("hidden");
-          }
-        }, 1000);
-      },
-      
-      showError: (message) => {
-        elements.hasil.innerHTML = `
-          <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-            <div class="flex items-start gap-3">
-              <div class="bg-red-100 text-red-800 p-2 rounded-full">
-                <i class="fas fa-exclamation"></i>
-              </div>
-              <div>
-                <h3 class="font-bold text-red-800">Terjadi Kesalahan</h3>
-                <p class="text-sm text-gray-600 mt-1">${message}</p>
-              </div>
-            </div>
-          </div>`;
-      }
+    const speak = (text) => {
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = 'id-ID';
+      window.speechSynthesis.speak(msg);
     };
 
-    // Fungsi scanner
+    const updateTime = () => {
+      elements.currentTime.textContent = new Date().toLocaleTimeString('id-ID');
+    };
+
+    const showError = (msg) => {
+      elements.hasil.innerHTML = `
+        <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+          <div class="flex items-start gap-3">
+            <div class="bg-red-100 text-red-800 p-2 rounded-full"><i class="fas fa-exclamation"></i></div>
+            <div><h3 class="font-bold text-red-800">Gagal</h3><p class="text-sm">${msg}</p></div>
+          </div>
+        </div>`;
+    };
+
+    const saveToSheet = async ({ nama_jamaah, majlis }) => {
+      elements.loadingIndicator.classList.remove("hidden");
+      const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(nama_jamaah)}&majlis=${encodeURIComponent(majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
+      const img = new Image(); img.src = url;
+
+      state.attendanceCounter++;
+      elements.attendanceCount.textContent = state.attendanceCounter;
+      elements.hasil.innerHTML = `
+        <div class="p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+          <div class="flex items-start gap-3">
+            <div class="bg-green-100 text-green-800 p-2 rounded-full"><i class="fas fa-check"></i></div>
+            <div>
+              <h3 class="font-bold text-green-800">Data Terkirim</h3>
+              <p class="text-sm text-gray-600 mt-1">${nama_jamaah} - ${majlis}</p>
+              <div class="text-xs text-gray-500 mt-2"><i class="far fa-clock"></i> ${new Date().toLocaleTimeString('id-ID')}</div>
+            </div>
+          </div>
+        </div>`;
+      elements.loadingIndicator.classList.add("hidden");
+    };
+
     const scanner = {
       init: async () => {
         state.html5QrCode = new Html5Qrcode("reader");
-        
         try {
           state.cameras = await Html5Qrcode.getCameras();
           if (state.cameras.length > 0) {
             state.currentCameraId = state.cameras[0].id;
             await scanner.start(state.currentCameraId);
           }
-        } catch (error) {
-          console.error("Error getting cameras:", error);
-          utils.showError("Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.");
+        } catch (e) {
+          showError("Tidak dapat mengakses kamera.");
         }
       },
-      
-      start: async (cameraId = null) => {
-        const config = { 
-          fps: 5,
-          qrbox: { width: 250, height: 250 },
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-          rememberLastUsedCamera: true,
-          aspectRatio: 1.777778
-        };
-        
-        try {
-          if (!cameraId) cameraId = { facingMode: "environment" };
-          await state.html5QrCode.start(cameraId, config, scanner.onSuccess, scanner.onFailure);
-        } catch (error) {
-          console.error("Error starting scanner:", error);
-          utils.showError("Gagal memulai scanner. Coba muat ulang halaman.");
-        }
+      start: async (cameraId) => {
+        await state.html5QrCode.start(cameraId, { fps: 5, qrbox: { width: 250, height: 250 } }, scanner.onSuccess);
       },
-      
       onSuccess: async (decodedText) => {
         if (!state.isScanning) return;
         state.isScanning = false;
-        
         const now = Date.now();
-        const isDuplicate = state.scanHistory.some(scan => 
+
+        const isDuplicate = state.scanHistory.some(scan =>
           scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
         );
-        
+
         if (isDuplicate) {
           elements.errorSound.play().catch(console.error);
-          utils.showError("Data ini sudah discan dalam 5 menit terakhir");
+          speak("Scan gagal");
+          showError("Kode ini sudah digunakan.");
           state.isScanning = true;
           return;
         }
-        
-        // Play sounds
+
         elements.beep.play().catch(console.error);
         elements.successSound.play().catch(console.error);
-        
-        // Tambahkan ke history
-        state.scanHistory.push({ text: decodedText, time: now });
-        state.scanHistory = state.scanHistory.filter(scan => (now - scan.time) < DUPLICATE_TIMEOUT);
-        
-        // Parse data
+
         const [nama_jamaah, majlis] = decodedText.split("|");
-        await scanner.saveToSheet({
-          nama_jamaah: nama_jamaah || decodedText,
-          majlis: majlis || '-'
-        });
-        
-        // Cooldown
-        utils.showCooldown(3);
-        setTimeout(() => {
-          state.isScanning = true;
-        }, SCAN_COOLDOWN);
-      },
-      
-      onFailure: (error) => {
-        console.log("Scan error:", error);
-      },
-      
-      saveToSheet: async (data) => {
-        elements.loadingIndicator.classList.remove("hidden");
-        
-        try {
-          // Gunakan pendekatan image beacon sebagai fallback
-          const img = new Image();
-          const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(data.nama_jamaah)}&majlis=${encodeURIComponent(data.majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
-          img.src = url;
-          
-          // Update UI
-          state.attendanceCounter++;
-          elements.attendanceCount.textContent = state.attendanceCounter;
-          
-          elements.hasil.innerHTML = `
-            <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-              <div class="flex items-start gap-3">
-                <div class="bg-green-100 text-green-800 p-2 rounded-full">
-                  <i class="fas fa-check"></i>
-                </div>
-                <div>
-                  <h3 class="font-bold text-green-800">Data Terkirim!</h3>
-                  <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
-                  <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
-                    <i class="far fa-clock"></i> ${new Date().toLocaleTimeString('id-ID')}
-                  </div>
-                </div>
-              </div>
-            </div>`;
-            
-        } catch (error) {
-          console.error("Error:", error);
-          utils.showError("Data sudah tercatat di sistem");
-        } finally {
-          elements.loadingIndicator.classList.add("hidden");
-        }
-      },
-      
-      toggleCamera: async () => {
-        if (state.cameras.length < 2) {
-          utils.showError("Hanya ditemukan 1 kamera");
-          return;
-        }
-        
-        try {
-          await state.html5QrCode.stop();
-          const currentIndex = state.cameras.findIndex(cam => cam.id === state.currentCameraId);
-          const nextIndex = (currentIndex + 1) % state.cameras.length;
-          state.currentCameraId = state.cameras[nextIndex].id;
-          await scanner.start(state.currentCameraId);
-          
-          const cameraLabel = state.cameras[nextIndex].label.toLowerCase();
-          const cameraType = cameraLabel.includes("front") ? "Depan" : "Belakang";
-          elements.toggleCameraBtn.innerHTML = `<i class="fas fa-camera-rotate mr-1"></i> Kamera ${cameraType}`;
-        } catch (error) {
-          console.error("Error toggling camera:", error);
-        }
-      },
-      
-      toggleFlash: async () => {
-        try {
-          const track = state.html5QrCode.getRunningTrack();
-          if (track && track.getCapabilities().torch) {
-            await track.applyConstraints({
-              advanced: [{torch: !track.getSettings().torch}]
-            });
-            elements.toggleFlashBtn.classList.toggle("text-yellow-500");
-            elements.toggleFlashBtn.classList.toggle("border-yellow-500");
-          } else {
-            utils.showError("Lampu flash tidak tersedia");
-          }
-        } catch (error) {
-          console.error("Error toggling flash:", error);
-        }
+        speak("Selamat datang, " + nama_jamaah);
+        state.scanHistory.push({ text: decodedText, time: now });
+        await saveToSheet({ nama_jamaah, majlis });
+        state.isScanning = true;
       }
     };
 
-    // Inisialisasi
     document.addEventListener("DOMContentLoaded", () => {
-      // Update waktu setiap detik
-      setInterval(utils.updateTime, 1000);
-      utils.updateTime();
-      
-      // Event listeners
-      elements.toggleCameraBtn.addEventListener("click", scanner.toggleCamera);
-      elements.toggleFlashBtn.addEventListener("click", scanner.toggleFlash);
-      
-      // Mulai scanner
+      setInterval(updateTime, 1000);
+      updateTime();
+      elements.toggleCameraBtn.addEventListener("click", async () => {
+        if (state.cameras.length < 2) return;
+        await state.html5QrCode.stop();
+        const i = state.cameras.findIndex(c => c.id === state.currentCameraId);
+        const next = (i + 1) % state.cameras.length;
+        state.currentCameraId = state.cameras[next].id;
+        await scanner.start(state.currentCameraId);
+      });
       scanner.init();
     });
   </script>
