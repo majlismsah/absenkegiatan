@@ -1,163 +1,600 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#3b82f6" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Kehadiran QR Jamaah</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    
     body {
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .logo i {
+      font-size: 28px;
+      color: white;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 24px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .scanner-container {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    
     .scanner-frame {
-      width: 80vw;
-      height: 80vw;
-      max-width: 300px;
-      max-height: 300px;
+      width: 250px;
+      height: 250px;
       border: 3px solid rgba(59, 130, 246, 0.5);
       border-radius: 12px;
       box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
       animation: pulse 2s infinite;
     }
+    
     @keyframes pulse {
-      0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
+      0% { border-color: rgba(59, 130, 246, 0.5); }
       50% { border-color: rgba(59, 130, 246, 0.8); }
+      100% { border-color: rgba(59, 130, 246, 0.5); }
     }
-    .tab.active {
-      background: linear-gradient(to right, #3b82f6, #8b5cf6);
+    
+    .card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
       color: white;
+      border: none;
+      font-weight: 500;
+      padding: 12px 24px;
+      border-radius: 12px;
+      transition: all 0.3s ease;
     }
-    .content-section { display: none; }
-    .content-section.active { display: block; }
+    
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+    
+    .cooldown-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      border-radius: 12px;
+      z-index: 10;
+    }
+    
+    .loading-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top: 3px solid var(--primary);
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .success-animation {
+      animation: successFlash 1s;
+    }
+    
+    @keyframes successFlash {
+      0% { background-color: rgba(16, 185, 129, 0.1); }
+      50% { background-color: rgba(16, 185, 129, 0.3); }
+      100% { background-color: rgba(16, 185, 129, 0.1); }
+    }
+    
+    /* Animasi untuk indikator suara */
+    .voice-indicator {
+      display: flex;
+      align-items: flex-end;
+      height: 30px;
+      gap: 2px;
+    }
+    
+    .voice-bar {
+      width: 4px;
+      background-color: var(--success);
+      border-radius: 2px;
+      transition: height 0.2s ease;
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-2 px-2">
-  <div class="mb-4 flex items-center gap-3">
-    <img src="https://raw.githubusercontent.com/majlismsah/forminfaqkonsumsiashnaf/main/logo.png" class="w-12 h-12 rounded-full shadow" />
-    <h1 class="text-xl font-bold text-gray-800">QR Kehadiran Jamaah</h1>
+<body class="min-h-screen flex flex-col items-center justify-start py-8 px-4">
+  <!-- Logo dan Judul -->
+  <div class="logo-container">
+    <div class="logo">
+      <i class="fas fa-qrcode"></i>
+    </div>
+    <div class="logo-text">QR Kehadiran</div>
   </div>
-
-  <div class="flex space-x-2 mb-4">
-    <button class="tab active px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('scanner')">Scanner</button>
-    <button class="tab px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('admin')">Admin Panel</button>
-  </div>
-
-  <div id="scanner" class="content-section active w-full">
-    <div class="bg-white p-4 rounded-xl shadow-lg">
-      <div class="flex justify-between mb-2 text-xs text-gray-500">
-        <div><i class="fas fa-users"></i> Hadir: <span id="attendanceCount">0</span></div>
-        <div><i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span></div>
-      </div>
-      <div class="relative">
-        <div id="reader" class="rounded-xl overflow-hidden"></div>
-        <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
-          <div class="scanner-frame"></div>
+  
+  <!-- Container Utama -->
+  <div class="w-full max-w-4xl">
+    <!-- Scanner Section -->
+    <div id="scannerSection">
+      <!-- Header -->
+      <div class="text-center mb-8 w-full">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Scan Kehadiran Jamaah</h1>
+        <p class="text-gray-600">Arahkan kamera ke QR Code yang ditunjukkan jamaah</p>
+        
+        <div class="flex justify-center gap-4 mt-4">
+          <div class="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+            <i class="fas fa-users"></i>
+            <span id="attendanceCount">0</span> Hadir
+          </div>
+          <div class="bg-gray-100 text-gray-800 px-4 py-2 rounded-full font-medium flex items-center gap-2">
+            <i class="fas fa-clock"></i>
+            <span id="currentTime">--:--:--</span>
+          </div>
         </div>
       </div>
-      <button id="toggleCamera" class="mt-4 w-full bg-white border border-blue-600 text-blue-600 py-2 rounded-full font-medium hover:bg-blue-50">
-        <i class="fas fa-camera-rotate"></i> Ganti Kamera
-      </button>
-    </div>
-    <div id="hasil" class="mt-4 text-center text-sm text-green-600 font-medium"></div>
-  </div>
-
-  <div id="admin" class="content-section w-full">
-    <div id="loginForm" class="bg-white p-6 rounded-xl shadow-lg">
-      <h2 class="text-lg font-bold text-center mb-4">Admin Login</h2>
-      <input id="username" class="w-full mb-3 p-2 border rounded" placeholder="Username" />
-      <input id="password" class="w-full mb-3 p-2 border rounded" placeholder="Password" type="password" />
-      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
-    </div>
-    <div id="adminPanel" class="hidden mt-4">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
-        <ul class="text-sm text-gray-700">
-          <li>Total Hadir: <span id="totalScan">--</span></li>
-          <li>Hari Ini: <span id="todayScan">--</span></li>
-          <li>Terakhir Scan: <span id="lastScan">--</span></li>
-        </ul>
-        <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
+      
+      <!-- Scanner Container -->
+      <div class="scanner-container card mb-8">
+        <div id="reader" class="w-full h-96"></div>
+        <div class="scanner-overlay">
+          <div class="scanner-frame"></div>
+        </div>
+        <div id="cooldownOverlay" class="cooldown-overlay hidden">
+          <div class="text-xl mb-2">Tunggu sebentar</div>
+          <div id="cooldownCounter" class="text-4xl font-bold">3</div>
+          <div class="text-sm mt-2">Sebelum scan berikutnya</div>
+        </div>
       </div>
-      <div id="riwayatScan" class="mt-4 space-y-3"></div>
+      
+      <!-- Controls -->
+      <div class="flex justify-center gap-4 mb-8">
+        <button id="toggleCamera" class="btn-primary flex items-center gap-2">
+          <i class="fas fa-camera-rotate"></i> Ganti Kamera
+        </button>
+        <button id="toggleFlash" class="btn-primary flex items-center gap-2">
+          <i class="fas fa-lightbulb"></i> Lampu
+        </button>
+        
+        <!-- Voice Control -->
+        <button id="toggleVoice" class="btn-primary flex items-center gap-2">
+          <i class="fas fa-volume-up"></i> Suara
+        </button>
+      </div>
+      
+      <!-- Voice Indicator -->
+      <div id="voiceIndicator" class="flex justify-center mb-4 hidden">
+        <div class="voice-indicator">
+          <div class="voice-bar" style="height: 5px;"></div>
+          <div class="voice-bar" style="height: 10px;"></div>
+          <div class="voice-bar" style="height: 15px;"></div>
+          <div class="voice-bar" style="height: 10px;"></div>
+          <div class="voice-bar" style="height: 5px;"></div>
+        </div>
+      </div>
+      
+      <!-- Hasil Scan -->
+      <div id="hasil" class="mb-8"></div>
     </div>
   </div>
-
-  <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
-  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
-
-  <script>
-    const ADMIN_USER = 'admin';
-    const ADMIN_PASS = '1234';
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
-
-    function showTab(tab) {
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    function loginAdmin() {
-      const u = document.getElementById('username').value;
-      const p = document.getElementById('password').value;
-      if (u === ADMIN_USER && p === ADMIN_PASS) {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        fetchAdminStats();
-      } else {
-        alert('Username atau password salah');
-      }
-    }
-
-    function logoutAdmin() {
-      document.getElementById('loginForm').classList.remove('hidden');
-      document.getElementById('adminPanel').classList.add('hidden');
-    }
-
-    function updateTime() {
-      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('id-ID');
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    function speakName(nama) {
-      const u = new SpeechSynthesisUtterance(nama);
-      u.lang = 'id-ID';
-      speechSynthesis.speak(u);
-    }
-
-    async function fetchAdminStats() {
-      try {
-        const res = await fetch(`${scriptURL}?mode=admin`);
-        const data = await res.json();
-        document.getElementById("totalScan").textContent = data.total;
-        document.getElementById("todayScan").textContent = data.today;
-        document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
-
-        document.getElementById("riwayatScan").innerHTML = data.recent.map(entry => `
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <div class="font-medium">${entry.nama}</div>
-              <div class="text-sm text-gray-500">Majlis ${entry.majlis}</div>
-            </div>
-            <div class="text-sm text-gray-500">${entry.waktu}</div>
-          </div>`).join("");
-      } catch (err) {
-        console.error("Gagal ambil data admin:", err);
-      }
-    }
-  </script>
-
-  <footer class="mt-6">
-    <p class="text-xs text-center text-gray-400">
-      &copy; 2025 Sistem Kehadiran | Majlis MSAH
-    </p>
+  
+  <!-- Footer -->
+  <footer class="mt-auto py-6 text-center text-gray-500 text-sm">
+    <div class="flex items-center justify-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+        <i class="fas fa-qrcode text-blue-600"></i>
+      </div>
+      <div class="font-medium">Sistem Kehadiran QR Jamaah</div>
+    </div>
+    <p>&copy; 2023 ARB 36 Titik. Hak cipta dilindungi.</p>
   </footer>
+
+  <!-- Scripts -->
+  <script>
+    // Konfigurasi
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
+    const sheetName = 'Rekap';
+    const SCAN_COOLDOWN = 3000; // 3 detik cooldown
+    const DUPLICATE_TIMEOUT = 300000; // 5 menit batas duplikat
+
+    // Elemen DOM
+    const elements = {
+      hasil: document.getElementById("hasil"),
+      toggleCameraBtn: document.getElementById("toggleCamera"),
+      toggleFlashBtn: document.getElementById("toggleFlash"),
+      toggleVoiceBtn: document.getElementById("toggleVoice"),
+      attendanceCount: document.getElementById("attendanceCount"),
+      currentTime: document.getElementById("currentTime"),
+      cooldownOverlay: document.getElementById("cooldownOverlay"),
+      cooldownCounter: document.getElementById("cooldownCounter"),
+      voiceIndicator: document.getElementById("voiceIndicator"),
+      voiceBars: document.querySelectorAll('.voice-bar')
+    };
+
+    // State aplikasi
+    let state = {
+      html5QrCode: null,
+      currentCameraId: null,
+      cameras: [],
+      attendanceCounter: 0,
+      scanHistory: [],
+      isScanning: true,
+      voiceEnabled: true,
+      speechSynthesis: window.speechSynthesis,
+      indonesianVoice: null,
+      voiceInterval: null
+    };
+
+    // Inisialisasi suara
+    function initVoice() {
+      // Cari suara bahasa Indonesia yang tersedia
+      const voices = state.speechSynthesis.getVoices();
+      state.indonesianVoice = voices.find(voice => 
+        voice.lang === 'id-ID' || voice.lang.startsWith('id-')
+      );
+      
+      // Jika tidak ada suara Indonesia, gunakan suara default
+      if (!state.indonesianVoice) {
+        state.indonesianVoice = voices.find(voice => 
+          voice.lang.includes('en') && voice.name.includes('Female')
+        );
+      }
+      
+      console.log('Using voice:', state.indonesianVoice);
+    }
+
+    // Fungsi untuk berbicara
+    function speakText(text) {
+      if (!state.voiceEnabled || !state.speechSynthesis || !state.indonesianVoice) return;
+      
+      // Hentikan ucapan sebelumnya
+      state.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = state.indonesianVoice;
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.9; // Lebih lambat untuk suara yang lembut
+      utterance.pitch = 1.2; // Sedikit lebih tinggi untuk suara yang ramah
+      utterance.volume = 1.0;
+      
+      // Animasi indikator suara
+      startVoiceAnimation();
+      
+      utterance.onend = () => {
+        stopVoiceAnimation();
+      };
+      
+      state.speechSynthesis.speak(utterance);
+    }
+
+    // Animasi indikator suara
+    function startVoiceAnimation() {
+      elements.voiceIndicator.classList.remove('hidden');
+      
+      if (state.voiceInterval) clearInterval(state.voiceInterval);
+      
+      state.voiceInterval = setInterval(() => {
+        elements.voiceBars.forEach(bar => {
+          const randomHeight = Math.floor(Math.random() * 20) + 5;
+          bar.style.height = `${randomHeight}px`;
+        });
+      }, 150);
+    }
+    
+    function stopVoiceAnimation() {
+      if (state.voiceInterval) {
+        clearInterval(state.voiceInterval);
+        state.voiceInterval = null;
+      }
+      
+      setTimeout(() => {
+        elements.voiceIndicator.classList.add('hidden');
+        elements.voiceBars.forEach(bar => {
+          bar.style.height = '5px';
+        });
+      }, 500);
+    }
+
+    // Fungsi utilitas
+    const utils = {
+      updateTime: () => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        elements.currentTime.textContent = timeString;
+        return now;
+      },
+      
+      showCooldown: (seconds) => {
+        elements.cooldownOverlay.classList.remove("hidden");
+        let counter = seconds;
+        
+        const interval = setInterval(() => {
+          elements.cooldownCounter.textContent = counter;
+          counter--;
+          
+          if (counter < 0) {
+            clearInterval(interval);
+            elements.cooldownOverlay.classList.add("hidden");
+          }
+        }, 1000);
+      },
+      
+      showError: (message) => {
+        elements.hasil.innerHTML = `
+          <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+            <div class="flex items-start gap-3">
+              <div class="bg-red-100 text-red-800 p-2 rounded-full">
+                <i class="fas fa-exclamation"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-red-800">Terjadi Kesalahan</h3>
+                <p class="text-sm text-gray-600 mt-1">${message}</p>
+              </div>
+            </div>
+          </div>`;
+      }
+    };
+
+    // Fungsi scanner
+    const scanner = {
+      init: async () => {
+        state.html5QrCode = new Html5Qrcode("reader");
+        
+        try {
+          state.cameras = await Html5Qrcode.getCameras();
+          if (state.cameras.length > 0) {
+            state.currentCameraId = state.cameras[0].id;
+            await scanner.start(state.currentCameraId);
+          }
+        } catch (error) {
+          console.error("Error getting cameras:", error);
+          utils.showError("Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.");
+        }
+        
+        // Inisialisasi suara setelah halaman dimuat
+        initVoice();
+      },
+      
+      start: async (cameraId = null) => {
+        const config = { 
+          fps: 5,
+          qrbox: { width: 250, height: 250 },
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          rememberLastUsedCamera: true,
+          aspectRatio: 1.777778
+        };
+        
+        try {
+          if (!cameraId) cameraId = { facingMode: "environment" };
+          await state.html5QrCode.start(cameraId, config, scanner.onSuccess, scanner.onFailure);
+        } catch (error) {
+          console.error("Error starting scanner:", error);
+          utils.showError("Gagal memulai scanner. Coba muat ulang halaman.");
+        }
+      },
+      
+      onSuccess: async (decodedText) => {
+        if (!state.isScanning) return;
+        state.isScanning = false;
+        
+        const now = Date.now();
+        const isDuplicate = state.scanHistory.some(scan => 
+          scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
+        );
+        
+        if (isDuplicate) {
+          utils.showError("Data ini sudah discan dalam 5 menit terakhir");
+          state.isScanning = true;
+          return;
+        }
+        
+        // Tambahkan ke history
+        state.scanHistory.push({ text: decodedText, time: now });
+        state.scanHistory = state.scanHistory.filter(scan => (now - scan.time) < DUPLICATE_TIMEOUT);
+        
+        // Parse data
+        const [nama_jamaah, majlis] = decodedText.split("|");
+        const data = {
+          nama_jamaah: nama_jamaah || decodedText,
+          majlis: majlis || '-'
+        };
+        
+        await scanner.saveToSheet(data);
+        
+        // Ucapkan nama jamaah
+        if (state.voiceEnabled) {
+          speakText(`Hadir, ${data.nama_jamaah}`);
+        }
+        
+        // Cooldown
+        utils.showCooldown(3);
+        setTimeout(() => {
+          state.isScanning = true;
+        }, SCAN_COOLDOWN);
+      },
+      
+      onFailure: (error) => {
+        console.log("Scan error:", error);
+      },
+      
+      saveToSheet: async (data) => {
+        try {
+          // Kirim data ke Google Sheets
+          const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(data.nama_jamaah)}&majlis=${encodeURIComponent(data.majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
+          await fetch(url);
+          
+          // Update UI
+          state.attendanceCounter++;
+          elements.attendanceCount.textContent = state.attendanceCounter;
+          
+          elements.hasil.innerHTML = `
+            <div class="success-animation p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
+              <div class="flex items-start gap-3">
+                <div class="bg-green-100 text-green-800 p-2 rounded-full">
+                  <i class="fas fa-check"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-green-800">Data Terkirim!</h3>
+                  <p class="text-sm text-gray-600 mt-1">${data.nama_jamaah} - ${data.majlis}</p>
+                  <div class="mt-2 text-xs text-gray-500 flex items-center gap-1">
+                    <i class="far fa-clock"></i> ${new Date().toLocaleTimeString('id-ID')}
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            
+        } catch (error) {
+          console.error("Error:", error);
+          utils.showError("Data sudah tercatat di sistem");
+        }
+      },
+      
+      toggleCamera: async () => {
+        if (state.cameras.length < 2) {
+          utils.showError("Hanya ditemukan 1 kamera");
+          return;
+        }
+        
+        try {
+          await state.html5QrCode.stop();
+          const currentIndex = state.cameras.findIndex(cam => cam.id === state.currentCameraId);
+          const nextIndex = (currentIndex + 1) % state.cameras.length;
+          state.currentCameraId = state.cameras[nextIndex].id;
+          await scanner.start(state.currentCameraId);
+          
+          const cameraLabel = state.cameras[nextIndex].label.toLowerCase();
+          const cameraType = cameraLabel.includes("front") ? "Depan" : "Belakang";
+          elements.toggleCameraBtn.innerHTML = `<i class="fas fa-camera-rotate mr-1"></i> Kamera ${cameraType}`;
+        } catch (error) {
+          console.error("Error toggling camera:", error);
+        }
+      },
+      
+      toggleFlash: async () => {
+        try {
+          const track = state.html5QrCode.getRunningTrack();
+          if (track && track.getCapabilities().torch) {
+            await track.applyConstraints({
+              advanced: [{torch: !track.getSettings().torch}]
+            });
+            elements.toggleFlashBtn.classList.toggle("text-yellow-500");
+            elements.toggleFlashBtn.classList.toggle("border-yellow-500");
+          } else {
+            utils.showError("Lampu flash tidak tersedia");
+          }
+        } catch (error) {
+          console.error("Error toggling flash:", error);
+        }
+      },
+      
+      toggleVoice: () => {
+        state.voiceEnabled = !state.voiceEnabled;
+        if (state.voiceEnabled) {
+          elements.toggleVoiceBtn.innerHTML = `<i class="fas fa-volume-up mr-1"></i> Suara`;
+          elements.toggleVoiceBtn.classList.remove("bg-gray-200", "text-gray-700");
+          elements.toggleVoiceBtn.classList.add("bg-blue-600", "text-white");
+        } else {
+          elements.toggleVoiceBtn.innerHTML = `<i class="fas fa-volume-mute mr-1"></i> Suara`;
+          elements.toggleVoiceBtn.classList.remove("bg-blue-600", "text-white");
+          elements.toggleVoiceBtn.classList.add("bg-gray-200", "text-gray-700");
+        }
+      }
+    };
+
+    // Inisialisasi
+    document.addEventListener("DOMContentLoaded", () => {
+      // Update waktu setiap detik
+      setInterval(utils.updateTime, 1000);
+      utils.updateTime();
+      
+      // Event listeners
+      elements.toggleCameraBtn.addEventListener("click", scanner.toggleCamera);
+      elements.toggleFlashBtn.addEventListener("click", scanner.toggleFlash);
+      elements.toggleVoiceBtn.addEventListener("click", scanner.toggleVoice);
+      
+      // Mulai scanner
+      scanner.init();
+      
+      // Load voices when available
+      if (state.speechSynthesis.onvoiceschanged !== undefined) {
+        state.speechSynthesis.onvoiceschanged = initVoice;
+      }
+    });
+  </script>
 </body>
 </html>
