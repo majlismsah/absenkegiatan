@@ -109,13 +109,27 @@
       scanner.pause();
       const [nama_jamaah, majlis] = decodedText.split("|");
       document.getElementById("beepSound").play();
-      document.getElementById("successSound").play();
-      speak("Selamat datang, " + nama_jamaah);
-      document.getElementById("attendanceCount").textContent = parseInt(document.getElementById("attendanceCount").textContent) + 1;
-      document.getElementById("hasil").innerHTML = `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'>${nama_jamaah} - ${majlis}</div>`;
 
       fetch(`${scriptURL}?nama_jamaah=${encodeURIComponent(nama_jamaah)}&majlis=${encodeURIComponent(majlis)}`)
-        .finally(() => setTimeout(() => scanner.resume(), 2000));
+        .then(res => res.text())
+        .then(result => {
+          if (result === "OK") {
+            document.getElementById("successSound").play();
+            speak("Selamat datang, " + nama_jamaah);
+            document.getElementById("attendanceCount").textContent = parseInt(document.getElementById("attendanceCount").textContent) + 1;
+            document.getElementById("hasil").innerHTML = `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'>${nama_jamaah} - ${majlis}</div>`;
+          } else {
+            document.getElementById("errorSound").play();
+            document.getElementById("hasil").innerHTML = `<div class='p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-800'>Gagal: QR sudah dipakai atau duplikat hari ini.</div>`;
+          }
+        })
+        .catch(() => {
+          document.getElementById("errorSound").play();
+          document.getElementById("hasil").innerHTML = `<div class='p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-800'>Terjadi kesalahan koneksi.</div>`;
+        })
+        .finally(() => {
+          setTimeout(() => scanner.resume(), 2000);
+        });
     }
 
     function updateTime() {
