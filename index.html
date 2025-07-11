@@ -2,14 +2,16 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Scan QR Jamaah - Sistem Kehadiran</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Kehadiran QR Jamaah</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     body {
       font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     }
     .scanner-frame {
       width: 250px; height: 250px;
@@ -22,60 +24,69 @@
       0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
       50% { border-color: rgba(59, 130, 246, 0.8); }
     }
-    .loading-spinner {
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top: 3px solid #3b82f6;
-      border-radius: 50%;
-      width: 20px; height: 20px;
-      animation: spin 1s linear infinite;
+    .tab.active {
+      background: linear-gradient(to right, #3b82f6, #8b5cf6);
+      color: white;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    .content-section { display: none; }
+    .content-section.active { display: block; }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center justify-start py-6 px-4">
-
-  <header class="text-center mb-8 w-full max-w-md">
-    <div class="flex items-center justify-center gap-3 mb-3">
-      <div class="bg-blue-600 text-white p-3 rounded-full">
-        <i class="fas fa-qrcode text-2xl"></i>
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold text-gray-800">Scan Kehadiran Jamaah</h1>
-        <p class="text-sm text-gray-500">Arahkan kamera ke QR Code</p>
-      </div>
-    </div>
-    <div class="flex justify-center gap-2 mb-4">
-      <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-        <i class="fas fa-users"></i> <span id="attendanceCount">0</span> Hadir
-      </div>
-      <div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-        <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="w-full max-w-md mb-6 relative">
-    <div class="bg-gray-100 shadow-xl rounded-2xl p-4 border border-gray-200 relative">
-      <div id="reader" class="rounded-xl overflow-hidden relative"></div>
-      <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
-        <div class="scanner-frame"></div>
-      </div>
-    </div>
-    <div class="flex justify-center mt-4 gap-3">
-      <button id="toggleCamera" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
-        <i class="fas fa-camera-rotate mr-1"></i> Ganti Kamera
-      </button>
-    </div>
+<body class="min-h-screen flex flex-col items-center py-6 px-4">
+  <div class="mb-6 flex items-center gap-4">
+  <img src="https://majlismsah.github.io/forminfaqkonsumsiashnaf/logo.png" alt="Logo" class="w-12 h-12 rounded-full shadow-md" />
+  <h1 class="text-2xl font-bold text-gray-800">QR Kehadiran Jamaah</h1>
   </div>
 
-  <div id="hasil" class="w-full max-w-md"></div>
+  <!-- Tab -->
+  <div class="flex space-x-2 mb-6">
+    <button class="tab active px-4 py-2 rounded-full font-medium" onclick="showTab('scanner')">Scanner</button>
+    <button class="tab px-4 py-2 rounded-full font-medium" onclick="showTab('admin')">Admin Panel</button>
+  </div>
 
-  <div id="loadingIndicator" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-xl shadow-lg text-center">
-      <div class="loading-spinner mx-auto mb-4"></div>
-      <p class="font-medium">Menyimpan data ke spreadsheet...</p>
+  <!-- Scanner Section -->
+  <div id="scanner" class="content-section active w-full max-w-md">
+    <div class="bg-white p-4 rounded-xl shadow-lg">
+      <div class="flex justify-between mb-2 text-sm text-gray-500">
+        <div><i class="fas fa-users"></i> Hadir: <span id="attendanceCount">0</span></div>
+        <div><i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span></div>
+      </div>
+      <div class="relative">
+        <div id="reader" class="rounded-xl overflow-hidden"></div>
+        <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
+          <div class="scanner-frame"></div>
+        </div>
+      </div>
+      <button id="toggleCamera" class="mt-4 w-full bg-white border border-blue-600 text-blue-600 py-2 rounded-full font-medium hover:bg-blue-50">
+        <i class="fas fa-camera-rotate"></i> Ganti Kamera
+      </button>
+      <label class="flex items-center mt-4 text-sm text-gray-600">
+        <input type="checkbox" id="voiceToggle" class="mr-2" checked />
+        Aktifkan Suara Nama Jamaah
+      </label>
+    </div>
+    <div id="hasil" class="mt-4 text-center font-medium"></div>
+  </div>
+
+  <!-- Admin Section -->
+  <div id="admin" class="content-section w-full max-w-md">
+    <div id="loginForm" class="bg-white p-6 rounded-xl shadow-lg">
+      <h2 class="text-lg font-bold text-center mb-4">Admin Login</h2>
+      <input id="username" class="w-full mb-3 p-2 border rounded" placeholder="Username" />
+      <input id="password" class="w-full mb-3 p-2 border rounded" placeholder="Password" type="password" />
+      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
+    </div>
+    <div id="adminPanel" class="hidden mt-6">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
+        <ul class="text-sm text-gray-700">
+          <li>Total Hadir: <span id="totalScan">--</span></li>
+          <li>Hari Ini: <span id="todayScan">--</span></li>
+          <li>Terakhir Scan: <span id="lastScan">--</span></li>
+        </ul>
+        <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
+      </div>
+      <div id="riwayatScan" class="mt-4 space-y-3"></div>
     </div>
   </div>
 
@@ -85,129 +96,117 @@
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = '1234';
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
-    const sheetName = 'Rekap';
-    const DUPLICATE_TIMEOUT = 300000;
 
-    const elements = {
-      beep: document.getElementById("beepSound"),
-      successSound: document.getElementById("successSound"),
-      errorSound: document.getElementById("errorSound"),
-      hasil: document.getElementById("hasil"),
-      toggleCameraBtn: document.getElementById("toggleCamera"),
-      attendanceCount: document.getElementById("attendanceCount"),
-      currentTime: document.getElementById("currentTime"),
-      loadingIndicator: document.getElementById("loadingIndicator"),
-    };
+    function showTab(tab) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
+    }
 
-    let state = {
-      html5QrCode: null,
-      currentCameraId: null,
-      cameras: [],
-      attendanceCounter: 0,
-      scanHistory: [],
-      isScanning: true
-    };
-
-    const speak = (text) => {
-      const msg = new SpeechSynthesisUtterance(text);
-      msg.lang = 'id-ID';
-      window.speechSynthesis.speak(msg);
-    };
-
-    const updateTime = () => {
-      elements.currentTime.textContent = new Date().toLocaleTimeString('id-ID');
-    };
-
-    const showError = (msg) => {
-      elements.hasil.innerHTML = `
-        <div class="p-4 bg-red-50 border border-red-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-          <div class="flex items-start gap-3">
-            <div class="bg-red-100 text-red-800 p-2 rounded-full"><i class="fas fa-exclamation"></i></div>
-            <div><h3 class="font-bold text-red-800">Gagal</h3><p class="text-sm">${msg}</p></div>
-          </div>
-        </div>`;
-    };
-
-    const saveToSheet = async ({ nama_jamaah, majlis }) => {
-      elements.loadingIndicator.classList.remove("hidden");
-      const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(nama_jamaah)}&majlis=${encodeURIComponent(majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
-      const img = new Image(); img.src = url;
-
-      state.attendanceCounter++;
-      elements.attendanceCount.textContent = state.attendanceCounter;
-      elements.hasil.innerHTML = `
-        <div class="p-4 bg-green-50 border border-green-200 rounded-xl shadow-sm max-w-md mx-auto mb-3">
-          <div class="flex items-start gap-3">
-            <div class="bg-green-100 text-green-800 p-2 rounded-full"><i class="fas fa-check"></i></div>
-            <div>
-              <h3 class="font-bold text-green-800">Data Terkirim</h3>
-              <p class="text-sm text-gray-600 mt-1">${nama_jamaah} - ${majlis}</p>
-              <div class="text-xs text-gray-500 mt-2"><i class="far fa-clock"></i> ${new Date().toLocaleTimeString('id-ID')}</div>
-            </div>
-          </div>
-        </div>`;
-      elements.loadingIndicator.classList.add("hidden");
-    };
-
-    const scanner = {
-      init: async () => {
-        state.html5QrCode = new Html5Qrcode("reader");
-        try {
-          state.cameras = await Html5Qrcode.getCameras();
-          if (state.cameras.length > 0) {
-            state.currentCameraId = state.cameras[0].id;
-            await scanner.start(state.currentCameraId);
-          }
-        } catch (e) {
-          showError("Tidak dapat mengakses kamera.");
-        }
-      },
-      start: async (cameraId) => {
-        await state.html5QrCode.start(cameraId, { fps: 5, qrbox: { width: 250, height: 250 } }, scanner.onSuccess);
-      },
-      onSuccess: async (decodedText) => {
-        if (!state.isScanning) return;
-        state.isScanning = false;
-        const now = Date.now();
-
-        const isDuplicate = state.scanHistory.some(scan =>
-          scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
-        );
-
-        if (isDuplicate) {
-          elements.errorSound.play();
-          speak("Scan gagal");
-          showError("Kode ini sudah digunakan.");
-          setTimeout(() => { state.isScanning = true; }, 2000);
-          return;
-        }
-
-        elements.beep.play();
-        elements.successSound.play();
-
-        const [nama_jamaah, majlis] = decodedText.split("|");
-        speak("Selamat datang, " + nama_jamaah);
-        state.scanHistory.push({ text: decodedText, time: now });
-
-        await saveToSheet({ nama_jamaah, majlis });
-        setTimeout(() => { state.isScanning = true; }, 2000);
+    function loginAdmin() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        fetchAdminStats();
+      } else {
+        alert('Username atau password salah');
       }
-    };
+    }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      setInterval(updateTime, 1000);
-      updateTime();
-      elements.toggleCameraBtn.addEventListener("click", async () => {
-        if (state.cameras.length < 2) return;
-        await state.html5QrCode.stop();
-        const i = state.cameras.findIndex(c => c.id === state.currentCameraId);
-        const next = (i + 1) % state.cameras.length;
-        state.currentCameraId = state.cameras[next].id;
-        await scanner.start(state.currentCameraId);
+    function logoutAdmin() {
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('adminPanel').classList.add('hidden');
+    }
+
+    function updateTime() {
+      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('id-ID');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    function speak(text) {
+      if (!window.speechSynthesis || !document.getElementById("voiceToggle").checked) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'id-ID';
+      speechSynthesis.cancel();
+      speechSynthesis.speak(utter);
+    }
+
+    function onScanSuccess(decodedText) {
+      const [nama, majlis] = decodedText.split('|');
+      document.getElementById("hasil").innerHTML = `<div class="text-green-600">✅ ${nama} (${majlis})</div>`;
+      document.getElementById("successSound").play();
+      speak(nama);
+
+      const params = new URLSearchParams({
+        nama_jamaah: nama,
+        majlis: majlis
       });
-      scanner.init();
+
+      fetch(scriptURL + '?' + params.toString())
+        .then(res => res.text())
+        .then(console.log)
+        .catch(console.error);
+    }
+
+    function fetchAdminStats() {
+      fetch(`${scriptURL}?mode=admin`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("totalScan").textContent = data.total || '--';
+          document.getElementById("todayScan").textContent = data.today || '--';
+          document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
+
+          const riwayatHTML = data.recent.map(entry => `
+            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <div class="font-medium">${entry.nama}</div>
+                <div class="text-sm text-gray-500">Majlis ${entry.majlis}</div>
+              </div>
+              <div class="text-sm text-gray-500">${entry.waktu}</div>
+            </div>
+          `).join("");
+          document.getElementById("riwayatScan").innerHTML = riwayatHTML;
+        })
+        .catch(console.error);
+    }
+
+    // QR SCANNER Setup
+    let html5QrCode;
+    let currentCamera = 0;
+
+    function startScanner() {
+      html5QrCode = new Html5Qrcode("reader");
+      Html5Qrcode.getCameras().then(cameras => {
+        if (cameras && cameras.length) {
+          html5QrCode.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+            onScanSuccess
+          );
+        }
+      }).catch(console.error);
+    }
+
+    document.getElementById("toggleCamera").addEventListener("click", () => {
+      if (!html5QrCode) return;
+      html5QrCode.stop().then(() => {
+        currentCamera = 1 - currentCamera;
+        html5QrCode.start(
+          { deviceId: { exact: currentCamera } },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
+        );
+      });
     });
+
+    startScanner();
   </script>
 </body>
 </html>
