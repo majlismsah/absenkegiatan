@@ -1,163 +1,654 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#3b82f6" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Sistem Kehadiran QR Jamaah</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
     }
-    .scanner-frame {
-      width: 80vw;
-      height: 80vw;
-      max-width: 300px;
-      max-height: 300px;
-      border: 3px solid rgba(59, 130, 246, 0.5);
+    
+    .header {
+      padding: 1rem;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 10;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
       border-radius: 12px;
-      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+    
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #1e3a8a;
+    }
+    
+    .scanner-container {
+      position: relative;
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background: black;
+    }
+    
+    #reader {
+      width: 100%;
+      height: 100%;
+      min-height: 60vh;
+      object-fit: cover;
+    }
+    
+    .scanner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    
+    .scanner-frame {
+      width: 80%;
+      max-width: 350px;
+      aspect-ratio: 1/1;
+      border: 3px solid rgba(59, 130, 246, 0.5);
+      border-radius: 16px;
+      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.7);
       animation: pulse 2s infinite;
+      margin-top: -20%;
     }
+    
     @keyframes pulse {
-      0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
+      0% { border-color: rgba(59, 130, 246, 0.5); }
       50% { border-color: rgba(59, 130, 246, 0.8); }
+      100% { border-color: rgba(59, 130, 246, 0.5); }
     }
-    .tab.active {
-      background: linear-gradient(to right, #3b82f6, #8b5cf6);
+    
+    .scanner-guide {
+      color: white;
+      margin-top: 1.5rem;
+      text-align: center;
+      font-weight: 500;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .controls {
+      padding: 1.5rem;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .control-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: #4b5563;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .control-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+    }
+    
+    .control-btn.active .control-icon {
+      background: #2563eb;
       color: white;
     }
-    .content-section { display: none; }
-    .content-section.active { display: block; }
+    
+    .result-container {
+      position: fixed;
+      bottom: 100px;
+      left: 0;
+      right: 0;
+      padding: 0 1rem;
+      z-index: 20;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .result-card {
+      background: white;
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      animation: slideUp 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    @keyframes slideUp {
+      from { transform: translateY(100px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .result-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .success-icon {
+      background: #d1fae5;
+      color: #10b981;
+    }
+    
+    .error-icon {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+    
+    .result-content {
+      flex-grow: 1;
+    }
+    
+    .result-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .result-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    
+    .cooldown-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 30;
+    }
+    
+    .cooldown-counter {
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+    
+    .cooldown-text {
+      font-size: 1.25rem;
+    }
+    
+    .stats-bar {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      right: 1rem;
+      display: flex;
+      justify-content: space-between;
+      z-index: 10;
+    }
+    
+    .stat-badge {
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      backdrop-filter: blur(5px);
+    }
+    
+    @media (max-height: 700px) {
+      .scanner-frame {
+        margin-top: -10%;
+        width: 70%;
+      }
+      
+      .scanner-guide {
+        margin-top: 1rem;
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-width: 400px) {
+      .controls {
+        padding: 1rem;
+      }
+      
+      .control-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 1.1rem;
+      }
+      
+      .control-btn span {
+        font-size: 0.75rem;
+      }
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col items-center py-2 px-2">
-  <div class="mb-4 flex items-center gap-3">
-    <img src="https://raw.githubusercontent.com/majlismsah/forminfaqkonsumsiashnaf/main/logo.png" class="w-12 h-12 rounded-full shadow" />
-    <h1 class="text-xl font-bold text-gray-800">QR Kehadiran Jamaah</h1>
-  </div>
-
-  <div class="flex space-x-2 mb-4">
-    <button class="tab active px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('scanner')">Scanner</button>
-    <button class="tab px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('admin')">Admin Panel</button>
-  </div>
-
-  <div id="scanner" class="content-section active w-full">
-    <div class="bg-white p-4 rounded-xl shadow-lg">
-      <div class="flex justify-between mb-2 text-xs text-gray-500">
-        <div><i class="fas fa-users"></i> Hadir: <span id="attendanceCount">0</span></div>
-        <div><i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span></div>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-container">
+      <div class="logo">
+        <img src="https://raw.githubusercontent.com/majlismsah/forminfaqkonsumsiashnaf/main/logo.png" alt="Logo">
       </div>
-      <div class="relative">
-        <div id="reader" class="rounded-xl overflow-hidden"></div>
-        <div class="absolute inset-0 flex justify-center items-center pointer-events-none">
-          <div class="scanner-frame"></div>
-        </div>
-      </div>
-      <button id="toggleCamera" class="mt-4 w-full bg-white border border-blue-600 text-blue-600 py-2 rounded-full font-medium hover:bg-blue-50">
-        <i class="fas fa-camera-rotate"></i> Ganti Kamera
-      </button>
-    </div>
-    <div id="hasil" class="mt-4 text-center text-sm text-green-600 font-medium"></div>
-  </div>
-
-  <div id="admin" class="content-section w-full">
-    <div id="loginForm" class="bg-white p-6 rounded-xl shadow-lg">
-      <h2 class="text-lg font-bold text-center mb-4">Admin Login</h2>
-      <input id="username" class="w-full mb-3 p-2 border rounded" placeholder="Username" />
-      <input id="password" class="w-full mb-3 p-2 border rounded" placeholder="Password" type="password" />
-      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
-    </div>
-    <div id="adminPanel" class="hidden mt-4">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
-        <ul class="text-sm text-gray-700">
-          <li>Total Hadir: <span id="totalScan">--</span></li>
-          <li>Hari Ini: <span id="todayScan">--</span></li>
-          <li>Terakhir Scan: <span id="lastScan">--</span></li>
-        </ul>
-        <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
-      </div>
-      <div id="riwayatScan" class="mt-4 space-y-3"></div>
+      <div class="logo-text">Kehadiran Jamaah</div>
     </div>
   </div>
+  
+  <!-- Scanner Area -->
+  <div class="scanner-container">
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-badge">
+        <i class="fas fa-users"></i>
+        <span id="attendanceCount">0</span>
+      </div>
+      <div class="stat-badge">
+        <i class="fas fa-clock"></i>
+        <span id="currentTime">--:--</span>
+      </div>
+    </div>
+    
+    <!-- Scanner Element -->
+    <div id="reader"></div>
+    
+    <!-- Scanner Overlay -->
+    <div class="scanner-overlay">
+      <div class="scanner-frame"></div>
+      <div class="scanner-guide">Arahkan QR Code ke dalam frame</div>
+    </div>
+    
+    <!-- Cooldown Overlay -->
+    <div id="cooldownOverlay" class="cooldown-overlay hidden">
+      <div class="cooldown-counter" id="cooldownCounter">3</div>
+      <div class="cooldown-text">Tunggu sebentar...</div>
+    </div>
+  </div>
+  
+  <!-- Controls -->
+  <div class="controls">
+    <button id="toggleCamera" class="control-btn">
+      <div class="control-icon">
+        <i class="fas fa-camera-rotate"></i>
+      </div>
+      <span>Ganti Kamera</span>
+    </button>
+    
+    <button id="toggleFlash" class="control-btn">
+      <div class="control-icon">
+        <i class="fas fa-lightbulb"></i>
+      </div>
+      <span>Lampu</span>
+    </button>
+    
+    <button id="toggleVoice" class="control-btn active">
+      <div class="control-icon">
+        <i class="fas fa-volume-up"></i>
+      </div>
+      <span>Suara</span>
+    </button>
+  </div>
+  
+  <!-- Result Container -->
+  <div class="result-container" id="resultContainer"></div>
 
-  <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
-  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
-
+  <!-- Scripts -->
   <script>
-    const ADMIN_USER = 'admin';
-    const ADMIN_PASS = '1234';
+    // Konfigurasi
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
+    const sheetName = 'Rekap';
+    const SCAN_COOLDOWN = 3000; // 3 detik cooldown
+    const DUPLICATE_TIMEOUT = 300000; // 5 menit batas duplikat
 
-    function showTab(tab) {
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      event.target.classList.add('active');
-    }
+    // Elemen DOM
+    const elements = {
+      resultContainer: document.getElementById("resultContainer"),
+      toggleCameraBtn: document.getElementById("toggleCamera"),
+      toggleFlashBtn: document.getElementById("toggleFlash"),
+      toggleVoiceBtn: document.getElementById("toggleVoice"),
+      attendanceCount: document.getElementById("attendanceCount"),
+      currentTime: document.getElementById("currentTime"),
+      cooldownOverlay: document.getElementById("cooldownOverlay"),
+      cooldownCounter: document.getElementById("cooldownCounter")
+    };
 
-    function loginAdmin() {
-      const u = document.getElementById('username').value;
-      const p = document.getElementById('password').value;
-      if (u === ADMIN_USER && p === ADMIN_PASS) {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        fetchAdminStats();
-      } else {
-        alert('Username atau password salah');
+    // State aplikasi
+    let state = {
+      html5QrCode: null,
+      currentCameraId: null,
+      cameras: [],
+      attendanceCounter: 0,
+      scanHistory: [],
+      isScanning: true,
+      voiceEnabled: true,
+      speechSynthesis: window.speechSynthesis,
+      indonesianVoice: null,
+      isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+      flashActive: false
+    };
+
+    // Inisialisasi suara
+    function initVoice() {
+      const voices = state.speechSynthesis.getVoices();
+      state.indonesianVoice = voices.find(voice => 
+        voice.lang === 'id-ID' || voice.lang.startsWith('id-')
+      );
+      
+      if (!state.indonesianVoice) {
+        state.indonesianVoice = voices.find(voice => 
+          voice.lang.includes('en') && voice.name.includes('Female')
+        );
       }
     }
 
-    function logoutAdmin() {
-      document.getElementById('loginForm').classList.remove('hidden');
-      document.getElementById('adminPanel').classList.add('hidden');
+    // Fungsi untuk berbicara
+    function speakText(text) {
+      if (!state.voiceEnabled || !state.speechSynthesis || !state.indonesianVoice) return;
+      
+      state.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = state.indonesianVoice;
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.9;
+      utterance.pitch = 1.1;
+      utterance.volume = 1.0;
+      
+      state.speechSynthesis.speak(utterance);
     }
 
-    function updateTime() {
-      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('id-ID');
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    function speakName(nama) {
-      const u = new SpeechSynthesisUtterance(nama);
-      u.lang = 'id-ID';
-      speechSynthesis.speak(u);
-    }
-
-    async function fetchAdminStats() {
-      try {
-        const res = await fetch(`${scriptURL}?mode=admin`);
-        const data = await res.json();
-        document.getElementById("totalScan").textContent = data.total;
-        document.getElementById("todayScan").textContent = data.today;
-        document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
-
-        document.getElementById("riwayatScan").innerHTML = data.recent.map(entry => `
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <div class="font-medium">${entry.nama}</div>
-              <div class="text-sm text-gray-500">Majlis ${entry.majlis}</div>
+    // Fungsi utilitas
+    const utils = {
+      updateTime: () => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        elements.currentTime.textContent = timeString;
+      },
+      
+      showCooldown: (seconds) => {
+        elements.cooldownOverlay.classList.remove("hidden");
+        let counter = seconds;
+        
+        const interval = setInterval(() => {
+          elements.cooldownCounter.textContent = counter;
+          counter--;
+          
+          if (counter < 0) {
+            clearInterval(interval);
+            elements.cooldownOverlay.classList.add("hidden");
+          }
+        }, 1000);
+      },
+      
+      showResult: (type, title, subtitle) => {
+        const icon = type === 'success' 
+          ? '<div class="result-icon success-icon"><i class="fas fa-check"></i></div>'
+          : '<div class="result-icon error-icon"><i class="fas fa-exclamation"></i></div>';
+        
+        elements.resultContainer.innerHTML = `
+          <div class="result-card">
+            ${icon}
+            <div class="result-content">
+              <div class="result-title">${title}</div>
+              <div class="result-subtitle">${subtitle}</div>
             </div>
-            <div class="text-sm text-gray-500">${entry.waktu}</div>
-          </div>`).join("");
-      } catch (err) {
-        console.error("Gagal ambil data admin:", err);
+          </div>
+        `;
+        
+        // Auto hide setelah 3 detik
+        setTimeout(() => {
+          elements.resultContainer.innerHTML = '';
+        }, 3000);
       }
-    }
-  </script>
+    };
 
-  <footer class="mt-6">
-    <p class="text-xs text-center text-gray-400">
-      &copy; 2025 Sistem Kehadiran | Majlis MSAH
-    </p>
-  </footer>
+    // Fungsi scanner
+    const scanner = {
+      init: async () => {
+        // Hitung ukuran QR box berdasarkan layar
+        const qrboxSize = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+        
+        state.html5QrCode = new Html5Qrcode("reader");
+        
+        try {
+          state.cameras = await Html5Qrcode.getCameras();
+          if (state.cameras.length > 0) {
+            // Prioritize back camera
+            const backCamera = state.cameras.find(cam => 
+              cam.label.toLowerCase().includes('back') || 
+              cam.label.toLowerCase().includes('rear')
+            );
+            
+            state.currentCameraId = backCamera ? backCamera.id : state.cameras[0].id;
+            await scanner.start(state.currentCameraId, qrboxSize);
+          }
+        } catch (error) {
+          console.error("Error getting cameras:", error);
+          utils.showResult('error', 'Kamera Error', 'Tidak dapat mengakses kamera');
+        }
+        
+        // Inisialisasi suara
+        if (state.speechSynthesis.onvoiceschanged !== undefined) {
+          state.speechSynthesis.onvoiceschanged = initVoice;
+        }
+        initVoice();
+      },
+      
+      start: async (cameraId, qrboxSize) => {
+        const config = { 
+          fps: 10,
+          qrbox: { width: qrboxSize, height: qrboxSize },
+          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+          rememberLastUsedCamera: true,
+          aspectRatio: 1.333334 // 4:3 untuk kamera mobile
+        };
+        
+        try {
+          await state.html5QrCode.start(cameraId, config, scanner.onSuccess, scanner.onFailure);
+          
+          // Set full screen camera preview
+          const videoElement = document.querySelector('#reader video');
+          if (videoElement) {
+            videoElement.style.objectFit = 'cover';
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+          }
+        } catch (error) {
+          console.error("Error starting scanner:", error);
+          utils.showResult('error', 'Scanner Error', 'Gagal memulai scanner');
+        }
+      },
+      
+      onSuccess: async (decodedText) => {
+        if (!state.isScanning) return;
+        state.isScanning = false;
+        
+        const now = Date.now();
+        const isDuplicate = state.scanHistory.some(scan => 
+          scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT
+        );
+        
+        if (isDuplicate) {
+          utils.showResult('error', 'Sudah Discan', 'Data ini sudah discan');
+          state.isScanning = true;
+          return;
+        }
+        
+        state.scanHistory.push({ text: decodedText, time: now });
+        state.scanHistory = state.scanHistory.filter(scan => (now - scan.time) < DUPLICATE_TIMEOUT);
+        
+        const [nama_jamaah, majlis] = decodedText.split("|");
+        const data = {
+          nama_jamaah: nama_jamaah ? nama_jamaah.trim() : decodedText,
+          majlis: majlis ? majlis.trim() : '-'
+        };
+        
+        await scanner.saveToSheet(data);
+        
+        if (state.voiceEnabled) {
+          speakText(`Hadir, ${data.nama_jamaah}`);
+        }
+        
+        utils.showCooldown(3);
+        setTimeout(() => {
+          state.isScanning = true;
+        }, SCAN_COOLDOWN);
+      },
+      
+      onFailure: (error) => {
+        console.log("Scan error:", error);
+      },
+      
+      saveToSheet: async (data) => {
+        try {
+          const url = `${scriptURL}?nama_jamaah=${encodeURIComponent(data.nama_jamaah)}&majlis=${encodeURIComponent(data.majlis)}&status=Hadir&sheet_name=${sheetName}&t=${Date.now()}`;
+          await fetch(url);
+          
+          state.attendanceCounter++;
+          elements.attendanceCount.textContent = state.attendanceCounter;
+          
+          utils.showResult('success', 'Berhasil Discan', `${data.nama_jamaah} - ${data.majlis}`);
+        } catch (error) {
+          console.error("Error:", error);
+          utils.showResult('error', 'Error Sistem', 'Data sudah tercatat');
+        }
+      },
+      
+      toggleCamera: async () => {
+        if (state.cameras.length < 2) {
+          utils.showResult('error', 'Kamera', 'Hanya 1 kamera tersedia');
+          return;
+        }
+        
+        try {
+          await state.html5QrCode.stop();
+          const currentIndex = state.cameras.findIndex(cam => cam.id === state.currentCameraId);
+          const nextIndex = (currentIndex + 1) % state.cameras.length;
+          state.currentCameraId = state.cameras[nextIndex].id;
+          
+          const qrboxSize = Math.min(window.innerWidth, window.innerHeight) * 0.7;
+          await scanner.start(state.currentCameraId, qrboxSize);
+          
+          const cameraLabel = state.cameras[nextIndex].label.toLowerCase();
+          const isBackCamera = cameraLabel.includes("back") || cameraLabel.includes("rear");
+          elements.toggleCameraBtn.querySelector('span').textContent = isBackCamera ? 'Kamera Depan' : 'Kamera Belakang';
+        } catch (error) {
+          console.error("Error toggling camera:", error);
+        }
+      },
+      
+      toggleFlash: async () => {
+        try {
+          const track = state.html5QrCode.getRunningTrack();
+          if (track && track.getCapabilities().torch) {
+            await track.applyConstraints({
+              advanced: [{torch: !state.flashActive}]
+            });
+            
+            state.flashActive = !state.flashActive;
+            if (state.flashActive) {
+              elements.toggleFlashBtn.classList.add('active');
+              elements.toggleFlashBtn.querySelector('span').textContent = 'Matikan';
+            } else {
+              elements.toggleFlashBtn.classList.remove('active');
+              elements.toggleFlashBtn.querySelector('span').textContent = 'Lampu';
+            }
+          } else {
+            utils.showResult('error', 'Flash', 'Tidak tersedia');
+          }
+        } catch (error) {
+          console.error("Error toggling flash:", error);
+        }
+      },
+      
+      toggleVoice: () => {
+        state.voiceEnabled = !state.voiceEnabled;
+        if (state.voiceEnabled) {
+          elements.toggleVoiceBtn.classList.add('active');
+          elements.toggleVoiceBtn.querySelector('i').className = 'fas fa-volume-up';
+        } else {
+          elements.toggleVoiceBtn.classList.remove('active');
+          elements.toggleVoiceBtn.querySelector('i').className = 'fas fa-volume-mute';
+        }
+      }
+    };
+
+    // Inisialisasi
+    document.addEventListener("DOMContentLoaded", () => {
+      setInterval(utils.updateTime, 1000);
+      utils.updateTime();
+      
+      elements.toggleCameraBtn.addEventListener("click", scanner.toggleCamera);
+      elements.toggleFlashBtn.addEventListener("click", scanner.toggleFlash);
+      elements.toggleVoiceBtn.addEventListener("click", scanner.toggleVoice);
+      
+      scanner.init();
+    });
+  </script>
 </body>
 </html>
