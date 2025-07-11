@@ -3,21 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sistem Kehadiran QR Jamaah</title>
+  <title>ABSENSI KEHADIRAN</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
     body {
       font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      background: linear-gradient(to bottom right, #f0f9ff, #e0f2fe);
     }
     .scanner-frame {
       width: 250px; height: 250px;
       border: 3px solid rgba(59, 130, 246, 0.5);
       border-radius: 12px;
-      box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.5);
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
@@ -33,15 +31,24 @@
   </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-6 px-4">
-  <div class="mb-6 flex items-center gap-3">
-    <img src="https://raw.githubusercontent.com/majlismsah/forminfaqkonsumsiashnaf/main/logo.png" class="w-12 h-12 rounded-full shadow" />
-    <h1 class="text-2xl font-bold text-gray-800">QR Kehadiran Jamaah</h1>
+
+  <!-- Logo + Judul -->
+  <div class="mb-4 flex items-center gap-3">
+    <img src="https://raw.githubusercontent.com/majlismsah/forminfaqkonsumsiashnaf/main/logo.png" class="w-10 h-10 rounded-full shadow" alt="Logo" />
+    <h1 class="text-xl font-bold text-gray-800 tracking-wide">ABSENSI KEHADIRAN</h1>
   </div>
 
-  <!-- Tab -->
-  <div class="flex space-x-2 mb-6">
-    <button class="tab active px-4 py-2 rounded-full font-medium" onclick="showTab('scanner')">Scanner</button>
-    <button class="tab px-4 py-2 rounded-full font-medium" onclick="showTab('admin')">Admin Panel</button>
+  <!-- Riwayat Scan di Atas -->
+  <div id="riwayatScan" class="w-full max-w-md space-y-2 mb-4">
+    <!-- Contoh isi:
+    <div class="flex items-center justify-between p-3 bg-gray-100 rounded-lg shadow">
+      <div>
+        <div class="font-semibold">Ahmad Mustofa</div>
+        <div class="text-sm text-gray-500">Majlis Kabilah Timur</div>
+      </div>
+      <div class="text-sm text-gray-500">09:15:22</div>
+    </div>
+    -->
   </div>
 
   <!-- Scanner Section -->
@@ -57,15 +64,20 @@
           <div class="scanner-frame"></div>
         </div>
       </div>
-      <button id="toggleCamera" class="mt-4 w-full bg-white border border-blue-600 text-blue-600 py-2 rounded-full font-medium hover:bg-blue-50">
-        <i class="fas fa-camera-rotate"></i> Ganti Kamera
-      </button>
     </div>
-    <div id="hasil" class="mt-4"></div>
+  </div>
+
+  <!-- Tombol Bawah -->
+  <div class="flex space-x-2 mt-4">
+    <button id="toggleCamera" class="bg-white border border-blue-600 text-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50">
+      <i class="fas fa-camera-rotate"></i> Ganti Kamera
+    </button>
+    <button class="tab active px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('scanner')">Scanner</button>
+    <button class="tab px-4 py-2 rounded-full text-sm font-medium" onclick="showTab('admin')">Admin Panel</button>
   </div>
 
   <!-- Admin Section -->
-  <div id="admin" class="content-section w-full max-w-md">
+  <div id="admin" class="content-section w-full max-w-md mt-6">
     <div id="loginForm" class="bg-white p-6 rounded-xl shadow-lg">
       <h2 class="text-lg font-bold text-center mb-4">Admin Login</h2>
       <input id="username" class="w-full mb-3 p-2 border rounded" placeholder="Username" />
@@ -82,126 +94,8 @@
         </ul>
         <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
       </div>
-      <div id="riwayatScan" class="mt-4 space-y-3"></div>
     </div>
   </div>
 
-  <!-- Audio -->
-  <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
-  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
-
-  <!-- Script -->
-  <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
-    const ADMIN_USER = 'admin';
-    const ADMIN_PASS = '1234';
-    const DUPLICATE_TIMEOUT = 300000;
-    let html5QrCode, currentCameraId, cameras = [], isScanning = true, scanHistory = [];
-
-    function showTab(tab) {
-      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      event.target.classList.add('active');
-    }
-
-    function updateTime() {
-      document.getElementById('currentTime').textContent = new Date().toLocaleTimeString('id-ID');
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-
-    function speakName(nama) {
-      const u = new SpeechSynthesisUtterance(nama);
-      u.lang = 'id-ID';
-      speechSynthesis.speak(u);
-    }
-
-    async function loginAdmin() {
-      const u = document.getElementById('username').value;
-      const p = document.getElementById('password').value;
-      if (u === ADMIN_USER && p === ADMIN_PASS) {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('adminPanel').classList.remove('hidden');
-        fetchAdminStats();
-      } else {
-        alert('Username atau password salah');
-      }
-    }
-
-    function logoutAdmin() {
-      document.getElementById('loginForm').classList.remove('hidden');
-      document.getElementById('adminPanel').classList.add('hidden');
-    }
-
-    async function fetchAdminStats() {
-      try {
-        const res = await fetch(`${scriptURL}?mode=admin`);
-        const data = await res.json();
-        document.getElementById("totalScan").textContent = data.total;
-        document.getElementById("todayScan").textContent = data.today;
-        document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
-        document.getElementById("riwayatScan").innerHTML = data.recent.map(entry => `
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div>
-              <div class="font-medium">${entry.nama}</div>
-              <div class="text-sm text-gray-500">Majlis ${entry.majlis}</div>
-            </div>
-            <div class="text-sm text-gray-500">${entry.waktu}</div>
-          </div>`).join("");
-      } catch (err) {
-        console.error("Gagal ambil data admin:", err);
-      }
-    }
-
-    async function startScanner() {
-      html5QrCode = new Html5Qrcode("reader");
-      cameras = await Html5Qrcode.getCameras();
-      if (cameras.length > 0) {
-        currentCameraId = cameras[0].id;
-        html5QrCode.start(currentCameraId, { fps: 10, qrbox: 250 }, onScanSuccess);
-      }
-    }
-
-    async function switchCamera() {
-      if (cameras.length < 2) return;
-      await html5QrCode.stop();
-      const i = cameras.findIndex(c => c.id === currentCameraId);
-      currentCameraId = cameras[(i + 1) % cameras.length].id;
-      await html5QrCode.start(currentCameraId, { fps: 10, qrbox: 250 }, onScanSuccess);
-    }
-
-    function onScanSuccess(decodedText) {
-      if (!isScanning) return;
-      const now = Date.now();
-      const isDuplicate = scanHistory.some(scan => scan.text === decodedText && now - scan.time < DUPLICATE_TIMEOUT);
-      if (isDuplicate) {
-        document.getElementById("errorSound").play();
-        speakName("Scan gagal");
-        isScanning = false;
-        setTimeout(() => isScanning = true, 2000);
-        return;
-      }
-
-      document.getElementById("beepSound").play();
-      document.getElementById("successSound").play();
-      const [nama_jamaah, majlis] = decodedText.split("|");
-      speakName("Selamat datang, " + nama_jamaah);
-
-      const img = new Image();
-      img.src = `${scriptURL}?nama_jamaah=${encodeURIComponent(nama_jamaah)}&majlis=${encodeURIComponent(majlis)}`;
-
-      document.getElementById("attendanceCount").textContent = +document.getElementById("attendanceCount").textContent + 1;
-      document.getElementById("hasil").innerHTML = `<div class='text-green-600 mt-2 font-semibold text-center'>${nama_jamaah} dari Majlis ${majlis} berhasil dicatat.</div>`;
-
-      scanHistory.push({ text: decodedText, time: now });
-      isScanning = false;
-      setTimeout(() => isScanning = true, 2000);
-    }
-
-    document.getElementById("toggleCamera").addEventListener("click", switchCamera);
-    window.onload = () => startScanner();
-  </script>
 </body>
 </html>
