@@ -38,13 +38,11 @@
     <h1 class="text-2xl font-bold text-gray-800">QR Kehadiran Jamaah</h1>
   </div>
 
-  <!-- Tab -->
   <div class="flex space-x-2 mb-6">
     <button class="tab active px-4 py-2 rounded-full font-medium" onclick="showTab('scanner')">Scanner</button>
     <button class="tab px-4 py-2 rounded-full font-medium" onclick="showTab('admin')">Admin Panel</button>
   </div>
 
-  <!-- Scanner Section -->
   <div id="scanner" class="content-section active w-full max-w-md">
     <div class="bg-white p-4 rounded-xl shadow-lg">
       <div class="flex justify-between mb-2 text-sm text-gray-500">
@@ -64,7 +62,6 @@
     <div id="hasil" class="mt-4"></div>
   </div>
 
-  <!-- Admin Section -->
   <div id="admin" class="content-section w-full max-w-md">
     <div id="loginForm" class="bg-white p-6 rounded-xl shadow-lg">
       <h2 class="text-lg font-bold text-center mb-4">Admin Login</h2>
@@ -86,7 +83,6 @@
     </div>
   </div>
 
-  <!-- Suara -->
   <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
   <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
@@ -152,12 +148,75 @@
         console.error("Gagal ambil data admin:", err);
       }
     }
+
+    let currentCamera = null;
+    let html5QrCode;
+    let cameras = [];
+
+    async function initScanner() {
+      try {
+        cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length) {
+          currentCamera = 0;
+          html5QrCode = new Html5Qrcode("reader");
+          startScanner(cameras[currentCamera].id);
+        } else {
+          alert("Kamera tidak ditemukan");
+        }
+      } catch (err) {
+        console.error("Gagal inisialisasi kamera:", err);
+      }
+    }
+
+    function startScanner(cameraId) {
+      html5QrCode.start(
+        cameraId,
+        { fps: 10, qrbox: 200 },
+        onScanSuccess,
+        onScanFailure
+      ).catch(err => console.error("Gagal memulai scanner:", err));
+    }
+
+    function stopScanner() {
+      if (html5QrCode) html5QrCode.stop().catch(err => console.error("Stop error", err));
+    }
+
+    function switchCamera() {
+      if (cameras.length <= 1) return;
+      stopScanner();
+      currentCamera = (currentCamera + 1) % cameras.length;
+      startScanner(cameras[currentCamera].id);
+    }
+
+    function onScanSuccess(decodedText) {
+      const [nama, majlis] = decodedText.split('|');
+      speakName(nama);
+      document.getElementById("successSound").play();
+
+      fetch(`${scriptURL}?nama_jamaah=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
+        .then(res => res.text())
+        .then(() => {
+          document.getElementById("hasil").innerHTML = `<div class="bg-green-100 text-green-800 p-2 rounded mt-2 text-center font-medium">${nama} dari Majlis ${majlis} tercatat hadir.</div>`;
+          fetchAdminStats();
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("errorSound").play();
+        });
+    }
+
+    function onScanFailure(error) {
+      // log atau diamkan
+    }
+
+    document.getElementById('toggleCamera').addEventListener('click', switchCamera);
+    window.addEventListener('load', initScanner);
   </script>
-  <!-- Footer -->
-<footer class="mt-8">
-  <p class="text-xs text-center text-gray-400">
-    &copy; 2025 Sistem Kehadiran | Diselenggarakan oleh Majlis MSAH | Barakallahu fiikum
-  </p>
-</footer>
+
+  <footer class="mt-8">
+    <p class="text-xs text-center text-gray-400">
+      &copy; 2025 Sistem Kehadiran | Diselenggarakan oleh Majlis MSAH | Barakallahu fiikum
+    </p>
+  </footer>
 </body>
 </html>
