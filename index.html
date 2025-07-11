@@ -11,12 +11,6 @@
     body {
       font-family: 'Poppins', sans-serif;
     }
-    .scanner-overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      pointer-events: none;
-    }
     .scanner-frame {
       width: 250px; height: 250px;
       border: 3px solid rgba(59, 130, 246, 0.5);
@@ -25,24 +19,23 @@
       animation: pulse 2s infinite;
     }
     @keyframes pulse {
-      0% { border-color: rgba(59, 130, 246, 0.5); }
+      0%, 100% { border-color: rgba(59, 130, 246, 0.5); }
       50% { border-color: rgba(59, 130, 246, 0.8); }
-      100% { border-color: rgba(59, 130, 246, 0.5); }
     }
     .loading-spinner {
-      border: 3px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,0.3);
       border-top: 3px solid #3b82f6;
+      border-radius: 50%;
       width: 20px; height: 20px;
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center justify-start py-6 px-4">
+
   <header class="text-center mb-8 w-full max-w-md">
     <div class="flex items-center justify-center gap-3 mb-3">
       <div class="bg-blue-600 text-white p-3 rounded-full">
@@ -66,7 +59,9 @@
   <div class="w-full max-w-md mb-6 relative">
     <div class="bg-gray-100 shadow-xl rounded-2xl p-4 border border-gray-200 relative">
       <div id="reader" class="rounded-xl overflow-hidden relative"></div>
-      <div class="scanner-overlay"><div class="scanner-frame"></div></div>
+      <div class="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
+        <div class="scanner-frame"></div>
+      </div>
     </div>
     <div class="flex justify-center mt-4 gap-3">
       <button id="toggleCamera" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
@@ -181,21 +176,22 @@
         );
 
         if (isDuplicate) {
-          elements.errorSound.play().catch(console.error);
+          elements.errorSound.play();
           speak("Scan gagal");
           showError("Kode ini sudah digunakan.");
-          state.isScanning = true;
+          setTimeout(() => { state.isScanning = true; }, 2000);
           return;
         }
 
-        elements.beep.play().catch(console.error);
-        elements.successSound.play().catch(console.error);
+        elements.beep.play();
+        elements.successSound.play();
 
         const [nama_jamaah, majlis] = decodedText.split("|");
         speak("Selamat datang, " + nama_jamaah);
         state.scanHistory.push({ text: decodedText, time: now });
+
         await saveToSheet({ nama_jamaah, majlis });
-        state.isScanning = true;
+        setTimeout(() => { state.isScanning = true; }, 2000);
       }
     };
 
