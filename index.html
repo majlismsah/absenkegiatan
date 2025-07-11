@@ -79,9 +79,12 @@
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyShqoa5Ed3ESuCwpWZcnCFIj1bjX6vuj1Td-FaF6F6Csr1nFogtfEsbDpTVxjxQtAPMA/exec';
     const ADMIN_USER = 'admin';
     const ADMIN_PASS = '1234';
+
     let currentCamIndex = 0;
     let scanner;
     let cameras = [];
+    let scanHistory = [];
+    const DUPLICATE_TIMEOUT = 300000;
 
     function speak(text) {
       const msg = new SpeechSynthesisUtterance(text);
@@ -106,30 +109,28 @@
     }
 
     async function handleScan(decodedText) {
+      const now = Date.now();
+      const isDuplicate = scanHistory.some(scan => scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT);
+
+      if (isDuplicate) {
+        document.getElementById("errorSound").play();
+        speak("Kode sudah digunakan");
+        document.getElementById("hasil").innerHTML = `<div class='p-3 bg-red-100 text-red-700 rounded-lg'>Scan duplikat! Coba QR lain.</div>`;
+        return;
+      }
+
+      scanHistory.push({ text: decodedText, time: now });
       scanner.pause();
+
       const [nama_jamaah, majlis] = decodedText.split("|");
       document.getElementById("beepSound").play();
+      document.getElementById("successSound").play();
+      speak("Selamat datang, " + nama_jamaah);
+      document.getElementById("attendanceCount").textContent = parseInt(document.getElementById("attendanceCount").textContent) + 1;
+      document.getElementById("hasil").innerHTML = `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'>${nama_jamaah} - ${majlis}</div>`;
 
       fetch(`${scriptURL}?nama_jamaah=${encodeURIComponent(nama_jamaah)}&majlis=${encodeURIComponent(majlis)}`)
-        .then(res => res.text())
-        .then(result => {
-          if (result === "OK") {
-            document.getElementById("successSound").play();
-            speak("Selamat datang, " + nama_jamaah);
-            document.getElementById("attendanceCount").textContent = parseInt(document.getElementById("attendanceCount").textContent) + 1;
-            document.getElementById("hasil").innerHTML = `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'>${nama_jamaah} - ${majlis}</div>`;
-          } else {
-            document.getElementById("errorSound").play();
-            document.getElementById("hasil").innerHTML = `<div class='p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-800'>Gagal: QR sudah dipakai atau duplikat hari ini.</div>`;
-          }
-        })
-        .catch(() => {
-          document.getElementById("errorSound").play();
-          document.getElementById("hasil").innerHTML = `<div class='p-3 bg-red-100 border border-red-300 rounded-lg text-sm text-red-800'>Terjadi kesalahan koneksi.</div>`;
-        })
-        .finally(() => {
-          setTimeout(() => scanner.resume(), 2000);
-        });
+        .finally(() => setTimeout(() => scanner.resume(), 2000));
     }
 
     function updateTime() {
