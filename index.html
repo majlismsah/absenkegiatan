@@ -1,64 +1,62 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Absensi Kehadiran (Clean)</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    #reader { width: 300px; margin: auto; }
-    #hasil { margin-top: 15px; font-size: 16px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Absensi QR Scanner</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+  body { font-family: Arial; text-align: center; padding: 20px; }
+  #reader { width: 300px; margin: auto; }
+  #hasil { margin-top: 15px; font-size: 16px; font-weight: bold; }
+</style>
 </head>
 <body>
-  <h2>Absensi Kehadiran</h2>
-  <div id="reader"></div>
-  <div id="hasil">Hasil scan akan muncul di sini...</div>
+<h2>Absensi Kehadiran</h2>
+<div id="reader"></div>
+<div id="hasil">Hasil scan akan muncul di sini...</div>
 
-  <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbybRYHEC59a36i36RbAWH9s7GC015h63Yq6O9NTm3j4-pN9RKGTC_xGu-GlJhJrIRRm/exec";
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyaDyuvhzr1CqwcvcHeHZIWzqPMICZ64w7T7qTcln2VHu86BQY-OTIXP0wpJgT9abmX/exec"; // ganti dengan URL GAS deploy
 
-    function handleScan(decodedText) {
-      document.getElementById("hasil").innerText = "Hasil scan: " + decodedText;
+function handleScan(decodedText) {
+  document.getElementById("hasil").innerText = "Hasil scan: " + decodedText;
 
-      const [nama, majlis] = decodedText.split(",");
-      if (!nama || !majlis) {
-        alert("Format QR salah. Harus: Nama,Majlis");
-        return;
-      }
+  const [nama, majlis] = decodedText.split(",");
+  if (!nama || !majlis) {
+    alert("Format QR salah. Harus: Nama,Majlis");
+    return;
+  }
 
-      // kirim ke Google Apps Script
-      fetch(scriptURL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama: nama.trim(), majlis: majlis.trim() })
-      })
-      .then(res => res.text())
-      .then(txt => {
-        console.log("Response:", txt);
-        alert("Server balas: " + txt);
-      })
-      .catch(err => {
-        console.error("Fetch error:", err);
-        alert("Fetch error: " + err);
-      });
-    }
+  fetch(scriptURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nama: nama.trim(), majlis: majlis.trim() })
+  })
+  .then(res => res.json())
+  .then(resJson => {
+    console.log("Response:", resJson);
+    alert("Server balas: " + JSON.stringify(resJson));
+  })
+  .catch(err => {
+    console.error("Fetch error:", err);
+    alert("Fetch error: " + err);
+  });
+}
 
-    // mulai scanner
-    const scanner = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras().then(cameras => {
-      if (cameras && cameras.length) {
-        scanner.start(
-          cameras[0].id, 
-          { fps: 10, qrbox: 250 },
-          handleScan
-        );
-      } else {
-        alert("Kamera tidak ditemukan!");
-      }
-    }).catch(err => console.error(err));
-  </script>
+// init scanner
+const scanner = new Html5Qrcode("reader");
+Html5Qrcode.getCameras().then(cameras => {
+  if (cameras && cameras.length) {
+    scanner.start(
+      cameras[0].id,
+      { fps: 10, qrbox: 250 },
+      handleScan
+    );
+  } else {
+    alert("Kamera tidak ditemukan!");
+  }
+}).catch(err => console.error(err));
+</script>
 </body>
 </html>
-
