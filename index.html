@@ -72,8 +72,8 @@
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxfOSybxWXVChifdJFaTkX6tBJwUeySIbhcflxU5f0jqAF2juV6YiDWEJUM9_yu89Jv/exec';
-    const SESSION_ACTIVE = 1; // ← Ubah sesuai sesi aktif
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxXXXXX/exec'; // ← ganti sesuai link Web App kamu
+    const SESSION_ACTIVE = 1; // ← ubah sesuai sesi aktif
     const ADMIN_USER = 'admin';
     const ADMIN_PASS = '1234';
     const DUPLICATE_TIMEOUT = 300000; // 5 menit
@@ -129,7 +129,7 @@
 
       scanner.pause();
       const parts = decodedText.split(",");
-      if (parts.length < 3) {
+      if (parts.length < 3 || !parts[2].includes("SESSION=")) {
         document.getElementById("errorSound").play();
         speak("Format QR tidak valid.");
         showResult("❌ Format QR tidak valid", "red");
@@ -137,8 +137,10 @@
         return;
       }
 
-      const [nama, majlis, sesiText] = parts;
-      const sesi = parseInt(sesiText.replace("SESSION=", "").trim() || "0");
+      const nama = parts[0].trim();
+      const majlis = parts[1].trim();
+      const sesi = parseInt(parts[2].replace("SESSION=", "").trim());
+
       if (sesi !== SESSION_ACTIVE) {
         document.getElementById("errorSound").play();
         speak("QR ini bukan untuk sesi aktif.");
@@ -156,7 +158,7 @@
         parseInt(document.getElementById("attendanceCount").textContent) + 1;
       showResult(`✅ ${nama} - ${majlis}`, "green");
 
-      fetch(`${scriptURL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
+      fetch(`${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}&sesi=${sesi}`)
         .then(res => res.text())
         .then(text => {
           console.log("Response:", text);
@@ -207,7 +209,7 @@
     }
 
     async function fetchAdminStats() {
-      const res = await fetch(`${scriptURL}?mode=admin`);
+      const res = await fetch(`${SCRIPT_URL}?mode=admin`);
       const data = await res.json();
       document.getElementById("totalScan").textContent = data.total;
       document.getElementById("todayScan").textContent = data.today;
