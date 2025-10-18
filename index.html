@@ -1,202 +1,202 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ABSENSI KEHADIRAN</title>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-      body { font-family: 'Poppins', sans-serif; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ABSENSI KEHADIRAN</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col items-center justify-start py-4 px-4">
 
-    <header class="text-center w-full max-w-md mb-4">
-      <div class="flex items-center justify-center gap-3 mb-2">
-        <img src="https://raw.githubusercontent.com/majlismsah/absenkegiatan/main/logo.png" class="w-10 h-10 rounded-full shadow" />
-        <h1 class="text-xl font-bold text-gray-800">ABSENSI KEHADIRAN</h1>
+  <header class="text-center w-full max-w-md mb-4">
+    <div class="flex items-center justify-center gap-3 mb-2">
+      <img src="https://raw.githubusercontent.com/majlismsah/absenkegiatan/main/logo.png" class="w-10 h-10 rounded-full shadow" />
+      <h1 class="text-xl font-bold text-gray-800">ABSENSI KEHADIRAN</h1>
+    </div>
+    <div class="flex justify-center gap-2">
+      <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+        <i class="fas fa-users"></i> <span id="attendanceCount">0</span> Hadir
       </div>
-      <div class="flex justify-center gap-2">
-        <div class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-          <i class="fas fa-users"></i> <span id="attendanceCount">0</span> Hadir
-        </div>
-        <div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-          <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
-        </div>
-      </div>
-    </header>
-
-    <div id="hasil" class="w-full max-w-md mb-3"></div>
-
-    <div class="w-full max-w-md">
-      <div class="bg-white rounded-xl shadow p-3">
-        <div id="reader" class="rounded overflow-hidden"></div>
+      <div class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+        <i class="fas fa-clock"></i> <span id="currentTime">--:--:--</span>
       </div>
     </div>
+  </header>
 
-    <div class="flex justify-center gap-2 mt-4 flex-wrap">
-      <button onclick="switchCamera()" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
-        <i class="fas fa-camera-rotate"></i> Ganti Kamera
-      </button>
-      <button onclick="togglePanel('scanner')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">Scanner</button>
-      <button onclick="togglePanel('admin')" class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm font-medium">Admin</button>
-      <button onclick="toggleSpeaker()" id="speakerBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-medium">
-        <i class="fas fa-volume-up"></i> Speaker ON
-      </button>
+  <div id="hasil" class="w-full max-w-md mb-3"></div>
+
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-xl shadow p-3">
+      <div id="reader" class="rounded overflow-hidden"></div>
     </div>
+  </div>
 
-    <div id="adminPanel" class="hidden w-full max-w-md mt-6">
-      <div id="loginForm" class="bg-white p-4 rounded-xl shadow">
-        <h2 class="font-bold text-center mb-3">Login Admin</h2>
-        <input id="username" class="w-full mb-2 p-2 border rounded" placeholder="Username" />
-        <input id="password" class="w-full mb-3 p-2 border rounded" type="password" placeholder="Password" />
-        <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
-      </div>
-      <div id="adminContent" class="hidden bg-white mt-4 p-4 rounded-xl shadow">
-        <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
-        <ul class="text-sm text-gray-700">
-          <li>Total Hadir: <span id="totalScan">--</span></li>
-          <li>Hari Ini: <span id="todayScan">--</span></li>
-          <li>Terakhir Scan: <span id="lastScan">--</span></li>
-        </ul>
-        <div id="riwayatScan" class="mt-4 space-y-2"></div>
-        <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
-      </div>
+  <div class="flex justify-center gap-2 mt-4 flex-wrap">
+    <button onclick="switchCamera()" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
+      <i class="fas fa-camera-rotate"></i> Ganti Kamera
+    </button>
+    <button onclick="togglePanel('scanner')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">Scanner</button>
+    <button onclick="togglePanel('admin')" class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm font-medium">Admin</button>
+    <button onclick="toggleSpeaker()" id="speakerBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+      <i class="fas fa-volume-up"></i> Speaker ON
+    </button>
+  </div>
+
+  <div id="adminPanel" class="hidden w-full max-w-md mt-6">
+    <div id="loginForm" class="bg-white p-4 rounded-xl shadow">
+      <h2 class="font-bold text-center mb-3">Login Admin</h2>
+      <input id="username" class="w-full mb-2 p-2 border rounded" placeholder="Username" />
+      <input id="password" class="w-full mb-3 p-2 border rounded" type="password" placeholder="Password" />
+      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
     </div>
+    <div id="adminContent" class="hidden bg-white mt-4 p-4 rounded-xl shadow">
+      <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
+      <ul class="text-sm text-gray-700">
+        <li>Total Hadir: <span id="totalScan">--</span></li>
+        <li>Hari Ini: <span id="todayScan">--</span></li>
+        <li>Terakhir Scan: <span id="lastScan">--</span></li>
+      </ul>
+      <div id="riwayatScan" class="mt-4 space-y-2"></div>
+      <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
+    </div>
+  </div>
 
-    <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-    <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
-    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
+  <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
+  <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
-    <script>
-      const scriptURL = 'https://script.google.com/macros/s/AKfycbxfOSybxWXVChifdJFaTkX6tBJwUeySIbhcflxU5f0jqAF2juV6YiDWEJUM9_yu89Jv/exec';
-      const ADMIN_USER = 'admin';
-      const ADMIN_PASS = '1234';
-      const DUPLICATE_TIMEOUT = 300000; // 5 menit
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxfOSybxWXVChifdJFaTkX6tBJwUeySIbhcflxU5f0jqAF2juV6YiDWEJUM9_yu89Jv/exec';
+    const ADMIN_USER = 'admin';
+    const ADMIN_PASS = '1234';
+    const DUPLICATE_TIMEOUT = 300000; // 5 menit
+    const sesiAktif = 1; // 🔹 ubah sesuai sesi kegiatan yang sedang berjalan
 
-      let currentCamIndex = 0;
-      let scanner;
-      let cameras = [];
-      let scanHistory = [];
-      let speakerOn = true;
+    let currentCamIndex = 0;
+    let scanner;
+    let cameras = [];
+    let scanHistory = [];
+    let speakerOn = true;
 
-      function speak(text) {
-        if (!speakerOn) return;
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'id-ID';
-        speechSynthesis.speak(msg);
+    function speak(text) {
+      if (!speakerOn) return;
+      window.speechSynthesis.cancel();
+      const msg = new SpeechSynthesisUtterance(text);
+      msg.lang = 'id-ID';
+      speechSynthesis.speak(msg);
+    }
+
+    function toggleSpeaker() {
+      speakerOn = !speakerOn;
+      document.getElementById('speakerBtn').innerHTML = `
+        <i class="fas ${speakerOn ? 'fa-volume-up' : 'fa-volume-mute'}"></i> Speaker ${speakerOn ? 'ON' : 'OFF'}`;
+    }
+
+    async function initScanner() {
+      scanner = new Html5Qrcode("reader");
+      cameras = await Html5Qrcode.getCameras();
+      if (cameras.length) {
+        await scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
       }
+    }
 
-      function toggleSpeaker() {
-        speakerOn = !speakerOn;
-        document.getElementById('speakerBtn').innerHTML = `
-          <i class="fas ${speakerOn ? 'fa-volume-up' : 'fa-volume-mute'}"></i> Speaker ${speakerOn ? 'ON' : 'OFF'}`;
-      }
+    function switchCamera() {
+      if (cameras.length < 2) return;
+      scanner.stop().then(() => {
+        currentCamIndex = (currentCamIndex + 1) % cameras.length;
+        scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
+      });
+    }
 
-      async function initScanner() {
-        scanner = new Html5Qrcode("reader");
-        cameras = await Html5Qrcode.getCameras();
-        if (cameras.length) {
-          await scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
-        }
-      }
+    async function handleScan(decodedText) {
+      const now = Date.now();
+      const isDuplicate = scanHistory.some(scan => scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT);
 
-      function switchCamera() {
-        if (cameras.length < 2) return;
-        scanner.stop().then(() => {
-          currentCamIndex = (currentCamIndex + 1) % cameras.length;
-          scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
-        });
-      }
-
-      async function handleScan(decodedText) {
-        const now = Date.now();
-        const isDuplicate = scanHistory.some(scan => scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT);
-
-        if (isDuplicate) {
-          document.getElementById("errorSound").play();
-          speak("Kode ini sudah digunakan.");
-          document.getElementById("hasil").innerHTML =
-            `<div class='p-3 bg-red-50 border border-red-200 rounded-lg text-sm'>Kode sudah digunakan!</div>`;
-          scanner.pause();
-          setTimeout(() => scanner.resume(), 3000);
-          return;
-        }
-
-        scanner.pause();
-        const [nama, majlis] = decodedText.split(",");
-        document.getElementById("beepSound").play();
-        document.getElementById("successSound").play();
-        speak("Selamat datang, " + nama);
-
-        scanHistory.push({ text: decodedText, time: now });
-
-        document.getElementById("attendanceCount").textContent =
-          parseInt(document.getElementById("attendanceCount").textContent) + 1;
+      if (isDuplicate) {
+        document.getElementById("errorSound").play();
+        speak("Kode ini sudah digunakan.");
         document.getElementById("hasil").innerHTML =
-          `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'><b>${nama}</b> - ${majlis}</div>`;
+          `<div class='p-3 bg-red-50 border border-red-200 rounded-lg text-sm'>Kode sudah digunakan!</div>`;
+        scanner.pause();
+        setTimeout(() => scanner.resume(), 3000);
+        return;
+      }
 
-        fetch(`${scriptURL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
+      scanner.pause();
+      const [nama, majlis] = decodedText.split(",");
+      document.getElementById("beepSound").play();
+      document.getElementById("successSound").play();
+      speak("Selamat datang, " + nama);
+
+      scanHistory.push({ text: decodedText, time: now });
+
+      document.getElementById("attendanceCount").textContent =
+        parseInt(document.getElementById("attendanceCount").textContent) + 1;
+      document.getElementById("hasil").innerHTML =
+        `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'><b>${nama}</b> - ${majlis}</div>`;
+
+      fetch(`${scriptURL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}&sesi=${sesiAktif}`)
         .then(res => res.text())
         .then(text => {
-            console.log("Response:", text);
-            if (text.trim().toLowerCase() === "ok") {
-                alert(`✅ ${nama} dari ${majlis} berhasil dicatat`);
-            } else {
-                alert(`❌ Gagal: ${text}`);
-            }
+          console.log("Response:", text);
+          if (text.trim().toUpperCase() === "OK") {
+            alert(`✅ ${nama} dari ${majlis} berhasil dicatat`);
+          } else {
+            alert(`⚠️ ${text}`);
+          }
         })
         .catch(err => {
-            console.error("Error:", err);
-            alert("Fetch error: " + err);
+          console.error("Error:", err);
+          alert("Fetch error: " + err);
         })
         .finally(() => setTimeout(() => scanner.resume(), 2000));
-      }
+    }
 
-      function updateTime() {
-        document.getElementById("currentTime").textContent =
-          new Date().toLocaleTimeString('id-ID');
-      }
-      setInterval(updateTime, 1000);
-      updateTime();
+    function updateTime() {
+      document.getElementById("currentTime").textContent =
+        new Date().toLocaleTimeString('id-ID');
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-      function togglePanel(panel) {
-        document.getElementById("adminPanel").classList.add("hidden");
-        if (panel === 'admin') document.getElementById("adminPanel").classList.remove("hidden");
-      }
+    function togglePanel(panel) {
+      document.getElementById("adminPanel").classList.add("hidden");
+      if (panel === 'admin') document.getElementById("adminPanel").classList.remove("hidden");
+    }
 
-      function loginAdmin() {
-        const u = document.getElementById('username').value;
-        const p = document.getElementById('password').value;
-        if (u === ADMIN_USER && p === ADMIN_PASS) {
-          document.getElementById('loginForm').classList.add('hidden');
-          document.getElementById('adminContent').classList.remove('hidden');
-          fetchAdminStats();
-        } else {
-          alert('Username atau password salah');
-        }
+    function loginAdmin() {
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('adminContent').classList.remove('hidden');
+        fetchAdminStats();
+      } else {
+        alert('Username atau password salah');
       }
+    }
 
-      function logoutAdmin() {
-        document.getElementById('loginForm').classList.remove('hidden');
-        document.getElementById('adminContent').classList.add('hidden');
-      }
+    function logoutAdmin() {
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('adminContent').classList.add('hidden');
+    }
 
-      async function fetchAdminStats() {
-        const res = await fetch(`${scriptURL}?mode=admin`);
-        const data = await res.json();
-        document.getElementById("totalScan").textContent = data.total;
-        document.getElementById("todayScan").textContent = data.today;
-        document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
-        document.getElementById("riwayatScan").innerHTML =
-          data.recent.map(r => `<div class='text-sm border p-2 rounded'>${r.nama} - ${r.majlis} (${r.waktu})</div>`).join('');
-      }
+    async function fetchAdminStats() {
+      const res = await fetch(`${scriptURL}?mode=admin`);
+      const data = await res.json();
+      document.getElementById("totalScan").textContent = data.total;
+      document.getElementById("todayScan").textContent = data.today;
+      document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
+      document.getElementById("riwayatScan").innerHTML =
+        data.recent.map(r => `<div class='text-sm border p-2 rounded'>${r.nama} - ${r.majlis} (${r.waktu})</div>`).join('');
+    }
 
-      document.addEventListener("DOMContentLoaded", initScanner);
-    </script>
+    document.addEventListener("DOMContentLoaded", initScanner);
+  </script>
 </body>
 </html>
-
