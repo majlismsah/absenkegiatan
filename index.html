@@ -66,16 +66,17 @@
     </div>
   </div>
 
+  <!-- Suara -->
   <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-  <audio id="successSound" src="https://actions.google.com/sounds/v1/office/camera_shutter_click.ogg" preload="auto"></audio>
+  <audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
     const scriptURL = 'https://script.google.com/macros/s/AKfycbxfOSybxWXVChifdJFaTkX6tBJwUeySIbhcflxU5f0jqAF2juV6YiDWEJUM9_yu89Jv/exec';
+    const SESSION_ACTIVE = 1; // ← Ubah sesuai sesi aktif
     const ADMIN_USER = 'admin';
     const ADMIN_PASS = '1234';
     const DUPLICATE_TIMEOUT = 300000; // 5 menit
-    const sesiAktif = 1; // 🔹 ubah sesuai sesi kegiatan yang sedang berjalan
 
     let currentCamIndex = 0;
     let scanner;
@@ -120,41 +121,60 @@
       if (isDuplicate) {
         document.getElementById("errorSound").play();
         speak("Kode ini sudah digunakan.");
-        document.getElementById("hasil").innerHTML =
-          `<div class='p-3 bg-red-50 border border-red-200 rounded-lg text-sm'>Kode sudah digunakan!</div>`;
+        showResult("❌ Kode sudah digunakan!", "red");
         scanner.pause();
         setTimeout(() => scanner.resume(), 3000);
         return;
       }
 
       scanner.pause();
-      const [nama, majlis] = decodedText.split(",");
+      const parts = decodedText.split(",");
+      if (parts.length < 3) {
+        document.getElementById("errorSound").play();
+        speak("Format QR tidak valid.");
+        showResult("❌ Format QR tidak valid", "red");
+        setTimeout(() => scanner.resume(), 2000);
+        return;
+      }
+
+      const [nama, majlis, sesiText] = parts;
+      const sesi = parseInt(sesiText.replace("SESSION=", "").trim() || "0");
+      if (sesi !== SESSION_ACTIVE) {
+        document.getElementById("errorSound").play();
+        speak("QR ini bukan untuk sesi aktif.");
+        showResult(`❌ QR ini untuk sesi ${sesi}, bukan sesi ${SESSION_ACTIVE}`, "red");
+        setTimeout(() => scanner.resume(), 3000);
+        return;
+      }
+
       document.getElementById("beepSound").play();
       document.getElementById("successSound").play();
       speak("Selamat datang, " + nama);
 
       scanHistory.push({ text: decodedText, time: now });
-
       document.getElementById("attendanceCount").textContent =
         parseInt(document.getElementById("attendanceCount").textContent) + 1;
-      document.getElementById("hasil").innerHTML =
-        `<div class='p-3 bg-green-50 border border-green-200 rounded-lg'><b>${nama}</b> - ${majlis}</div>`;
+      showResult(`✅ ${nama} - ${majlis}`, "green");
 
-      fetch(`${scriptURL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}&sesi=${sesiAktif}`)
+      fetch(`${scriptURL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
         .then(res => res.text())
         .then(text => {
           console.log("Response:", text);
-          if (text.trim().toUpperCase() === "OK") {
-            alert(`✅ ${nama} dari ${majlis} berhasil dicatat`);
-          } else {
-            alert(`⚠️ ${text}`);
+          if (!text.toLowerCase().includes("ok")) {
+            document.getElementById("errorSound").play();
+            showResult(`❌ ${text}`, "red");
           }
         })
         .catch(err => {
           console.error("Error:", err);
-          alert("Fetch error: " + err);
+          showResult("❌ Gagal kirim data", "red");
         })
-        .finally(() => setTimeout(() => scanner.resume(), 2000));
+        .finally(() => setTimeout(() => scanner.resume(), 2500));
+    }
+
+    function showResult(msg, color) {
+      const hasil = document.getElementById("hasil");
+      hasil.innerHTML = `<div class='p-3 bg-${color}-50 border border-${color}-200 rounded-lg text-sm font-medium text-${color}-700 text-center'>${msg}</div>`;
     }
 
     function updateTime() {
