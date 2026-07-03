@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ABSENSI KEHADIRAN</title>
+  <title>ABSENSI KEHADIRAN - HARFU MIM</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,7 +15,7 @@
 
   <header class="text-center w-full max-w-md mb-4">
     <div class="flex items-center justify-center gap-3 mb-2">
-      <img src="https://raw.githubusercontent.com/majlismsah/absenkegiatan/main/logo.png" class="w-10 h-10 rounded-full shadow" />
+      <img src="https://raw.githubusercontent.com/majlismsah/absenkegiatan/main/logo.png" class="w-10 h-10 rounded-full shadow" onerror="this.src='https://placehold.co/100x100?text=🕌'"/>
       <h1 class="text-xl font-bold text-gray-800">ABSENSI KEHADIRAN</h1>
     </div>
     <div class="flex justify-center gap-2">
@@ -40,43 +40,45 @@
     <button onclick="switchCamera()" class="bg-white text-blue-600 border border-blue-600 px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-50 transition">
       <i class="fas fa-camera-rotate"></i> Ganti Kamera
     </button>
-    <button onclick="togglePanel('scanner')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium">Scanner</button>
-    <button onclick="togglePanel('admin')" class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm font-medium">Admin</button>
-    <button onclick="toggleSpeaker()" id="speakerBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-medium">
+    <button onclick="togglePanel('scanner')" class="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">Scanner</button>
+    <button onclick="togglePanel('admin')" class="bg-gray-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">Admin</button>
+    <button onclick="toggleSpeaker()" id="speakerBtn" class="bg-yellow-500 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
       <i class="fas fa-volume-up"></i> Speaker ON
     </button>
   </div>
 
   <div id="adminPanel" class="hidden w-full max-w-md mt-6">
-    <div id="loginForm" class="bg-white p-4 rounded-xl shadow">
+    <div id="loginForm" class="bg-white p-4 rounded-xl shadow border border-gray-100">
       <h2 class="font-bold text-center mb-3">Login Admin</h2>
-      <input id="username" class="w-full mb-2 p-2 border rounded" placeholder="Username" />
-      <input id="password" class="w-full mb-3 p-2 border rounded" type="password" placeholder="Password" />
-      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded">Login</button>
+      <input id="username" class="w-full mb-2 p-2 border border-gray-300 rounded text-sm focus:outline-blue-500" placeholder="Username" />
+      <input id="password" class="w-full mb-3 p-2 border border-gray-300 rounded text-sm focus:outline-blue-500" type="password" placeholder="Password" />
+      <button onclick="loginAdmin()" class="w-full bg-blue-600 text-white py-2 rounded font-medium text-sm">Login</button>
     </div>
-    <div id="adminContent" class="hidden bg-white mt-4 p-4 rounded-xl shadow">
-      <h3 class="font-bold mb-2">Statistik Kehadiran</h3>
-      <ul class="text-sm text-gray-700">
-        <li>Total Hadir: <span id="totalScan">--</span></li>
-        <li>Hari Ini: <span id="todayScan">--</span></li>
-        <li>Terakhir Scan: <span id="lastScan">--</span></li>
+    <div id="adminContent" class="hidden bg-white mt-4 p-4 rounded-xl shadow border border-gray-100">
+      <h3 class="font-bold mb-2 text-sm text-gray-700">Statistik Kehadiran Realtime</h3>
+      <ul class="text-sm text-gray-600 space-y-1 mb-4 bg-gray-50 p-3 rounded-lg">
+        <li>Total Terdaftar Hadir: <span id="totalScan" class="font-bold text-blue-600">--</span></li>
+        <li>Sesi Hari Ini: <span id="todayScan" class="font-bold text-emerald-600">--</span></li>
+        <li>Terakhir Scan Masuk: <span id="lastScan" class="font-bold text-gray-800">--</span></li>
       </ul>
-      <div id="riwayatScan" class="mt-4 space-y-2"></div>
-      <button onclick="logoutAdmin()" class="mt-4 text-red-500">Logout</button>
+      <h4 class="font-bold text-xs text-gray-500 uppercase tracking-wider mb-2">5 Riwayat Terakhir</h4>
+      <div id="riwayatScan" class="space-y-2"></div>
+      <button onclick="logoutAdmin()" class="mt-4 text-xs text-red-500 font-medium hover:underline block">← Logout Admin</button>
     </div>
   </div>
 
-  <!-- Suara -->
   <audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
   <audio id="successSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
   <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_warning.ogg" preload="auto"></audio>
 
   <script>
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfOSybxWXVChifdJFaTkX6tBJwUeySIbhcflxU5f0jqAF2juV6YiDWEJUM9_yu89Jv/exec'; // ← ganti sesuai link Web App kamu
-    const SESSION_ACTIVE = 2; // ← ubah sesuai sesi aktif
+    // ====================================================================
+    // CONFIG FINAL - SUDAH TERINTEGRASI DENGAN URL WEB APP BARU ANDA
+    // ====================================================================
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw9eTvCixystl0tyLa0CUftz65_Ld3fniQCqx0HSKFUxI2l6WiQtYVHA7tV7gbHbYgRUw/exec'; 
     const ADMIN_USER = 'admin';
     const ADMIN_PASS = '1234';
-    const DUPLICATE_TIMEOUT = 300000; // 5 menit
+    const DUPLICATE_TIMEOUT = 300000; // Proteksi double scan (5 menit)
 
     let currentCamIndex = 0;
     let scanner;
@@ -102,7 +104,7 @@
       scanner = new Html5Qrcode("reader");
       cameras = await Html5Qrcode.getCameras();
       if (cameras.length) {
-        await scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
+        await scanner.start(cameras[currentCamIndex].id, { fps: 10, qrbox: 250 }, handleScan);
       }
     }
 
@@ -110,10 +112,13 @@
       if (cameras.length < 2) return;
       scanner.stop().then(() => {
         currentCamIndex = (currentCamIndex + 1) % cameras.length;
-        scanner.start(cameras[currentCamIndex].id, { fps: 5, qrbox: 250 }, handleScan);
+        scanner.start(cameras[currentCamIndex].id, { fps: 10, qrbox: 250 }, handleScan);
       });
     }
 
+    // ====================================================================
+    // LOGIKA PARSING HADIR DENGAN FORMAT TEKS: Nama, Majlis
+    // ====================================================================
     async function handleScan(decodedText) {
       const now = Date.now();
       const isDuplicate = scanHistory.some(scan => scan.text === decodedText && (now - scan.time) < DUPLICATE_TIMEOUT);
@@ -129,25 +134,18 @@
 
       scanner.pause();
       const parts = decodedText.split(",");
-      if (parts.length < 3 || !parts[2].includes("SESSION=")) {
+      
+      // Validasi format QR Code
+      if (parts.length < 2) {
         document.getElementById("errorSound").play();
-        speak("Format QR tidak valid.");
-        showResult("❌ Format QR tidak valid", "red");
-        setTimeout(() => scanner.resume(), 2000);
+        speak("Format Q R tidak valid.");
+        showResult("❌ Format QR tidak valid!", "red");
+        setTimeout(() => scanner.resume(), 2500);
         return;
       }
 
       const nama = parts[0].trim();
       const majlis = parts[1].trim();
-      const sesi = parseInt(parts[2].replace("SESSION=", "").trim());
-
-      if (sesi !== SESSION_ACTIVE) {
-        document.getElementById("errorSound").play();
-        speak("QR ini bukan untuk sesi aktif.");
-        showResult(`❌ QR ini untuk sesi ${sesi}, bukan sesi ${SESSION_ACTIVE}`, "red");
-        setTimeout(() => scanner.resume(), 3000);
-        return;
-      }
 
       document.getElementById("beepSound").play();
       document.getElementById("successSound").play();
@@ -156,32 +154,39 @@
       scanHistory.push({ text: decodedText, time: now });
       document.getElementById("attendanceCount").textContent =
         parseInt(document.getElementById("attendanceCount").textContent) + 1;
-      showResult(`✅ ${nama} - ${majlis}`, "green");
+      
+      showResult(`⏳ Memproses Absen: ${nama}...`, "blue");
 
-      fetch(`${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}&sesi=${sesi}`)
+      // Kirim parameter data absensi murni ke Google Apps Script
+      fetch(`${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
         .then(res => res.text())
         .then(text => {
-          console.log("Response:", text);
-          if (!text.toLowerCase().includes("ok")) {
+          console.log("Response database:", text);
+          if (text.includes("OK")) {
+            showResult(`✅ BERHASIL ABSEN: ${nama} (${majlis})`, "green");
+          } else {
             document.getElementById("errorSound").play();
-            showResult(`❌ ${text}`, "red");
+            showResult(`⚠️ ${text}`, "yellow");
           }
         })
         .catch(err => {
-          console.error("Error:", err);
-          showResult("❌ Gagal kirim data", "red");
+          console.error("Error Transmisi:", err);
+          showResult("❌ Gagal kirim data internet terputus", "red");
         })
         .finally(() => setTimeout(() => scanner.resume(), 2500));
     }
 
     function showResult(msg, color) {
       const hasil = document.getElementById("hasil");
-      hasil.innerHTML = `<div class='p-3 bg-${color}-50 border border-${color}-200 rounded-lg text-sm font-medium text-${color}-700 text-center'>${msg}</div>`;
+      let bgStyle = `bg-${color}-50 border-${color}-200 text-${color}-700`;
+      if(color === 'green') bgStyle = 'bg-green-50 border-green-200 text-green-700 font-bold';
+      if(color === 'red') bgStyle = 'bg-red-50 border-red-200 text-red-700';
+      
+      hasil.innerHTML = `<div class='p-3 border rounded-lg text-sm text-center shadow-sm ${bgStyle}'>${msg}</div>`;
     }
 
     function updateTime() {
-      document.getElementById("currentTime").textContent =
-        new Date().toLocaleTimeString('id-ID');
+      document.getElementById("currentTime").textContent = new Date().toLocaleTimeString('id-ID');
     }
     setInterval(updateTime, 1000);
     updateTime();
@@ -209,20 +214,20 @@
     }
 
     async function fetchAdminStats() {
-      const res = await fetch(`${SCRIPT_URL}?mode=admin`);
-      const data = await res.json();
-      document.getElementById("totalScan").textContent = data.total;
-      document.getElementById("todayScan").textContent = data.today;
-      document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
-      document.getElementById("riwayatScan").innerHTML =
-        data.recent.map(r => `<div class='text-sm border p-2 rounded'>${r.nama} - ${r.majlis} (${r.waktu})</div>`).join('');
+      try {
+        const res = await fetch(`${SCRIPT_URL}?mode=admin`);
+        const data = await res.json();
+        document.getElementById("totalScan").textContent = data.total;
+        document.getElementById("todayScan").textContent = data.today;
+        document.getElementById("lastScan").textContent = data.recent[0]?.waktu || '-';
+        document.getElementById("riwayatScan").innerHTML =
+          data.recent.map(r => `<div class='text-xs border border-gray-100 bg-gray-50 p-2 rounded flex justify-between'><span><b>${r.nama}</b> - ${r.majlis}</span><span class='text-gray-400'>${r.waktu}</span></div>`).join('');
+      } catch (e) {
+        console.log("Gagal memuat statistik", e);
+      }
     }
 
     document.addEventListener("DOMContentLoaded", initScanner);
   </script>
 </body>
 </html>
-
-
-
-
