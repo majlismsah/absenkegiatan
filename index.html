@@ -117,7 +117,7 @@
     }
 
     // ====================================================================
-    // LOGIKA PARSING HADIR DENGAN FORMAT TEKS: Nama, Majlis
+    // LOGIKA PARSING HADIR DENGAN FORMAT TEKS: Nama - Majlis
     // ====================================================================
     async function handleScan(decodedText) {
       const now = Date.now();
@@ -133,7 +133,9 @@
       }
 
       scanner.pause();
-      const parts = decodedText.split(",");
+      
+      // Memecah data menggunakan tanda strip ( - ) sesuai rumus Google Sheets Anda
+      const parts = decodedText.split(" - ");
       
       // Validasi format QR Code
       if (parts.length < 2) {
@@ -157,7 +159,7 @@
       
       showResult(`⏳ Memproses Absen: ${nama}...`, "blue");
 
-      // Kirim parameter data absensi murni ke Google Apps Script
+      // Kirim parameter data absensi ke Google Apps Script
       fetch(`${SCRIPT_URL}?nama=${encodeURIComponent(nama)}&majlis=${encodeURIComponent(majlis)}`)
         .then(res => res.text())
         .then(text => {
