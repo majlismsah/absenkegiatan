@@ -135,7 +135,7 @@
       scanner.pause();
       
       // Memecah data menggunakan tanda strip ( - ) sesuai rumus Google Sheets Anda
-      const parts = decodedText.split(" - ");
+      const parts = decodedText.split(", ");
       
       // Validasi format QR Code
       if (parts.length < 2) {
